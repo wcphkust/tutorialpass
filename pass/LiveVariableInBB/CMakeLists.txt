@@ -1,0 +1,15 @@
+# CSDN: https://blog.csdn.net/bigdog_1027/article/details/79113342
+#add_library(LiveVariableInBBPass MODULE ../VariableInBB/VariableInBB.cpp)
+add_library(LiveVariableInBBPass MODULE LiveVariableInBB.cpp)
+target_link_libraries(LiveVariableInBBPass VariableInBBPass)
+
+target_compile_features(LiveVariableInBBPass PRIVATE cxx_range_for cxx_auto_type)
+
+# LLVM is (typically) built with no C++ RTTI. We need to match that;
+# otherwise, we'll get linker errors about missing RTTI data.
+set_target_properties(LiveVariableInBBPass PROPERTIES COMPILE_FLAGS "-fno-rtti")
+
+# If the directory tutorialpass is removed, the include_directories should be changed
+include_directories("../../../llvm/include")
+include_directories("../../../llvm/build/include")
+include_directories("../../build/VariableInBB")

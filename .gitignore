@@ -1,0 +1,7 @@
+*.bc
+*.ll
+/cmake-build-debug-remote/
+/cmake-build-release/
+/build/
+/test/
+.clion.source.upload.marker
