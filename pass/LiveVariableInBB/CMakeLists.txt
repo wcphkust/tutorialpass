@@ -1,5 +1,3 @@
-# CSDN: https://blog.csdn.net/bigdog_1027/article/details/79113342
-#add_library(LiveVariableInBBPass MODULE ../VariableInBB/VariableInBB.cpp)
 add_library(LiveVariableInBBPass MODULE LiveVariableInBB.cpp)
 target_link_libraries(LiveVariableInBBPass VariableInBBPass)
 
@@ -13,3 +11,4 @@ set_target_properties(LiveVariableInBBPass PROPERTIES COMPILE_FLAGS "-fno-rtti")
 include_directories("../../../llvm/include")
 include_directories("../../../llvm/build/include")
 include_directories("../../build/VariableInBB")
+
