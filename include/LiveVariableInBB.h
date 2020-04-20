@@ -23,8 +23,8 @@ using namespace std;
 
 namespace {
     typedef std::vector<string> BitVectorBase;
-    typedef std::map<string, int> BitVector;
-    typedef std::stack<BitVector> BitVectorList;
+    typedef std::map<string, int> BitVectorMap;
+    typedef std::stack<BitVectorMap> BitVectorList;
 
     struct LiveVariableInBB : public llvm::FunctionPass {
         static char ID;
@@ -36,8 +36,8 @@ namespace {
         void getAnalysisUsage(llvm::AnalysisUsage &AU) const;
         bool runOnFunction(llvm::Function &F) override;
 
-        BitVector generateEmptyBitVector();
-        BitVector transferFunction(BitVector bv, BitVectorBase KillBase, BitVectorBase GenBase);
+        BitVectorMap generateEmptyBitVector();
+        BitVectorMap transferFunction(BitVectorMap bv, BitVectorBase KillBase, BitVectorBase GenBase);
         void printLiveVariableInBBResult(llvm::StringRef FuncName);
     };
 }

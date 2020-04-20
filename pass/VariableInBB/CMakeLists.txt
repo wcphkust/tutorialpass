@@ -8,6 +8,3 @@ target_compile_features(VariableInBBPass PRIVATE cxx_range_for cxx_auto_type)
 set_target_properties(VariableInBBPass PROPERTIES
         COMPILE_FLAGS "-fno-rtti")
 
-# If the directory tutorialpass is removed, the include_directories should be changed
-include_directories("../../../llvm/include")
-include_directories("../../../llvm/build/include")

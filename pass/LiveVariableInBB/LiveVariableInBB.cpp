@@ -68,7 +68,7 @@ bool LiveVariableInBB::runOnFunction(llvm::Function &F) {
             }
             if (currentLine != preLine) {
                 errs() << "LiveInfo size " << LiveInfo.size() << "\n";
-                BitVector bv = transferFunction(LiveInfo.top(), KillBase, GenBase);
+                BitVectorMap bv = transferFunction(LiveInfo.top(), KillBase, GenBase);
                 KillBase.clear();
                 GenBase.clear();
                 LiveInfo.push(bv);
@@ -106,15 +106,15 @@ bool LiveVariableInBB::runOnFunction(llvm::Function &F) {
     return false;
 }
 
-BitVector LiveVariableInBB::generateEmptyBitVector() {
-    BitVector bv;
+BitVectorMap LiveVariableInBB::generateEmptyBitVector() {
+    BitVectorMap bv;
     for (int i = 0; i < vectorBase.size(); i++) {
         bv[vectorBase[i]] = 0;
     }
     return bv;
 }
 
-BitVector LiveVariableInBB::transferFunction(BitVector bv, BitVectorBase KillBase, BitVectorBase GenBase) {
+BitVectorMap LiveVariableInBB::transferFunction(BitVectorMap bv, BitVectorBase KillBase, BitVectorBase GenBase) {
     for (int i = 0; i < KillBase.size(); i++) {
         if (find(vectorBase.begin(), vectorBase.end(), KillBase[i]) != vectorBase.end()) {
             bv[KillBase[i]] = 0;
@@ -143,10 +143,10 @@ void LiveVariableInBB::printLiveVariableInBBResult(StringRef FuncName) {
     errs() << "=================================================\n";
 
     while(!LiveInfo.empty() and !LocInfo.empty()) {
-        BitVector bv = LiveInfo.top();
+        BitVectorMap bv = LiveInfo.top();
         unsigned line = LocInfo.top();
         errs() << line << ": {";
-        for (BitVector::iterator it2 = bv.begin(); it2 != bv.end(); it2++) {
+        for (BitVectorMap::iterator it2 = bv.begin(); it2 != bv.end(); it2++) {
             if (it2->second) {
                 errs() << it2->first << "  ";
             }

@@ -35,30 +35,30 @@ char LiveVariableInBranch::ID = 0;
  * SingleBasicBlockLivenessInfo constructor
  * Ininitialize by inserting the bit vector of the last statement
  */
-SingleBasicBlockLivenessInfo::SingleBasicBlockLivenessInfo(BitVector bv) {
+SingleBasicBlockLivenessInfo::SingleBasicBlockLivenessInfo(BitVectorMap bv) {
     BBLiveVec.push(bv);
 }
 
 /*
  * Add the liveness info of current statement to BBLiveVec
  */
-void SingleBasicBlockLivenessInfo::pushBitVector(BitVector bv) {
+void SingleBasicBlockLivenessInfo::pushBitVector(BitVectorMap bv) {
     BBLiveVec.push(bv);
 }
 
 /*
  * Get the liveness of first statement
  */
-BitVector SingleBasicBlockLivenessInfo::getBasicHeadLiveInfo() {
-    BitVector headBV = BBLiveVec.back();
+BitVectorMap SingleBasicBlockLivenessInfo::getBasicHeadLiveInfo() {
+    BitVectorMap headBV = BBLiveVec.back();
     return headBV;
 }
 
 /*
  * Get the liveness of last statement
  */
-BitVector SingleBasicBlockLivenessInfo::getBasicTailLiveInfo() {
-    BitVector tailBV = BBLiveVec.front();
+BitVectorMap SingleBasicBlockLivenessInfo::getBasicTailLiveInfo() {
+    BitVectorMap tailBV = BBLiveVec.front();
     return tailBV;
 }
 
@@ -116,8 +116,8 @@ void BasicBlockWorkList::popBasicBlockToWorkList() {
 }
 
 //Merge two bitvectors
-BitVector BasicBlockWorkList::mergeBitVector(BitVector bv1, BitVector bv2, bool approx_para) {
-    BitVector bv;
+BitVectorMap BasicBlockWorkList::mergeBitVector(BitVectorMap bv1, BitVectorMap bv2, bool approx_para) {
+    BitVectorMap bv;
     for (auto it = bv1.begin(); it != bv1.end(); it++) {
         if (approx_para) {
             bv[it->first] = (bv1[it->first] or bv2[it->first]);
@@ -135,7 +135,7 @@ BitVector BasicBlockWorkList::mergeBitVector(BitVector bv1, BitVector bv2, bool 
  *   bv: bit vector propagated backward from a successor
  *   approx_para: true for may analysis, false for must analysis, default to true
  */
-void BasicBlockWorkList::mergeTailBVMap(BasicBlock* bb, BitVector bv, bool approx_para) {
+void BasicBlockWorkList::mergeTailBVMap(BasicBlock* bb, BitVectorMap bv, bool approx_para) {
     auto it = tailBVMap.find(bb);
     if (it == tailBVMap.end()) {
         tailBVMap[bb] = bv;
@@ -168,7 +168,7 @@ bool LiveVariableInBranch::runOnFunction(llvm::Function &F) {
     }
 
     /*Step 0: initialize the tail statement of the last basic block*/
-    BitVector bv = getLivenessInLastBB(F);
+    BitVectorMap bv = getLivenessInLastBB(F);
 
     //collect the basic block and initialize BasicBlockFlag
     BasicBlockWorkList BBWorkList = BasicBlockWorkList(F);
@@ -188,7 +188,7 @@ bool LiveVariableInBranch::runOnFunction(llvm::Function &F) {
         errs() << "Basic Block Num: " << iterNum << "\n";
         BasicBlock* bb = BBWorkList.BasicBlockList.front();
         errs() << "Basic Block Name: " << bb->getName() << "\n";
-        BitVector connectBV = getLivenessInSingleBB(bb, BBWorkList.tailBVMap[bb]);
+        BitVectorMap connectBV = getLivenessInSingleBB(bb, BBWorkList.tailBVMap[bb]);
 
         for (auto it = pred_begin(bb), et = pred_end(bb); it != et; ++it) {
             BasicBlock* predBB = *it;
@@ -212,10 +212,10 @@ bool LiveVariableInBranch::runOnFunction(llvm::Function &F) {
 
 /*
  * Judege the equal relation of two bit vector
- * Parameter: BitVector bv1, bv2
+ * Parameter: BitVectorMap bv1, bv2
  * Return: true if bv1=bv2, otherwise false
 */
- bool LiveVariableInBranch::isEqualBitVector(BitVector bv1, BitVector bv2) {
+ bool LiveVariableInBranch::isEqualBitVector(BitVectorMap bv1, BitVectorMap bv2) {
      for (auto it = bv1.begin(); it != bv1.end(); it++) {
          if (bv1[it->first] != bv2[it->first]) {
              return false;
@@ -233,12 +233,12 @@ bool LiveVariableInBranch::runOnFunction(llvm::Function &F) {
  * Return:
  *   true: FP has reached; false: otherwise
  */
-bool LiveVariableInBranch::hasReachedFixedPoint(BasicBlock* bb, BitVector connectBV) {
+bool LiveVariableInBranch::hasReachedFixedPoint(BasicBlock* bb, BitVectorMap connectBV) {
     if (BasicBlockLivenessInfo.find(bb) == BasicBlockLivenessInfo.end()) {
         return false;
     }
     SingleBasicBlockLivenessInfo info = BasicBlockLivenessInfo[bb];
-    BitVector originConnectBV = info.getBasicTailLiveInfo();
+    BitVectorMap originConnectBV = info.getBasicTailLiveInfo();
     if (isEqualBitVector(originConnectBV, connectBV)) {
         return true;
     }
@@ -253,7 +253,7 @@ bool LiveVariableInBranch::hasReachedFixedPoint(BasicBlock* bb, BitVector connec
  *  bv: the initial liveness state, i.e. the liveness info of the last statement
  * Return: the liveness info the first statement
  */
-BitVector LiveVariableInBranch::getLivenessInSingleBB(BasicBlock *bb, BitVector bv) {
+BitVectorMap LiveVariableInBranch::getLivenessInSingleBB(BasicBlock *bb, BitVectorMap bv) {
     SingleBasicBlockLivenessInfo info = SingleBasicBlockLivenessInfo(bv);
     BitVectorBase KillBase, GenBase;
 
@@ -288,7 +288,7 @@ BitVector LiveVariableInBranch::getLivenessInSingleBB(BasicBlock *bb, BitVector 
             errs() << "-----------------------------" << "\n";
         } else continue;
 
-        BitVector newBv = transferFunction(info.getBasicHeadLiveInfo(), KillBase, GenBase);
+        BitVectorMap newBv = transferFunction(info.getBasicHeadLiveInfo(), KillBase, GenBase);
         KillBase.clear();
         GenBase.clear();
 
@@ -309,10 +309,10 @@ BitVector LiveVariableInBranch::getLivenessInSingleBB(BasicBlock *bb, BitVector 
  *  bb: the pointer of exit block
  * Return: the liveness info the first statement
  */
-BitVector LiveVariableInBranch::getLivenessInLastBB(Function &F) {
-    BitVector bv = generateEmptyBitVector();
+BitVectorMap LiveVariableInBranch::getLivenessInLastBB(Function &F) {
+    BitVectorMap bv = generateEmptyBitVector();
     BasicBlock* bb = &(*F.getBasicBlockList().rbegin());
-    BitVector newBv = getLivenessInSingleBB(bb, bv);
+    BitVectorMap newBv = getLivenessInSingleBB(bb, bv);
     return newBv;
 }
 
@@ -320,8 +320,8 @@ BitVector LiveVariableInBranch::getLivenessInLastBB(Function &F) {
  * Get empty bit vector storing zero vector
  * Return: the empty bit vector
  */
-BitVector LiveVariableInBranch::generateEmptyBitVector() {
-    BitVector bv;
+BitVectorMap LiveVariableInBranch::generateEmptyBitVector() {
+    BitVectorMap bv;
     for (int i = 0; i < vectorBase.size(); i++) {
         bv[vectorBase[i]] = 0;
     }
@@ -337,7 +337,7 @@ BitVector LiveVariableInBranch::generateEmptyBitVector() {
  * Return:
  *   The updated liveness info after kill and gen opertion
  */
-BitVector LiveVariableInBranch::transferFunction(BitVector bv, BitVectorBase KillBase, BitVectorBase GenBase) {
+BitVectorMap LiveVariableInBranch::transferFunction(BitVectorMap bv, BitVectorBase KillBase, BitVectorBase GenBase) {
     for (int i = 0; i < KillBase.size(); i++) {
         if (find(vectorBase.begin(), vectorBase.end(), KillBase[i]) != vectorBase.end()) {
             bv[KillBase[i]] = 0;

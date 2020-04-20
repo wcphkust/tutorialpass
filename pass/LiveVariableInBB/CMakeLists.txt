@@ -7,8 +7,3 @@ target_compile_features(LiveVariableInBBPass PRIVATE cxx_range_for cxx_auto_type
 # otherwise, we'll get linker errors about missing RTTI data.
 set_target_properties(LiveVariableInBBPass PROPERTIES COMPILE_FLAGS "-fno-rtti")
 
-# If the directory tutorialpass is removed, the include_directories should be changed
-include_directories("../../../llvm/include")
-include_directories("../../../llvm/build/include")
-include_directories("../../build/VariableInBB")
-

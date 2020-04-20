@@ -30,8 +30,8 @@ using namespace llvm;
 
 namespace {
     typedef std::vector<string> BitVectorBase;
-    typedef std::map<string, int> BitVector;
-    typedef std::queue<BitVector> BitVectorList;
+    typedef std::map<string, int> BitVectorMap;
+    typedef std::queue<BitVectorMap> BitVectorList;
 
     //Record liveness of variables in each basic block
     struct SingleBasicBlockLivenessInfo {
@@ -41,23 +41,23 @@ namespace {
         SingleBasicBlockLivenessInfo() {}
 
         //Ininitialize by inserting the bit vector of the last statement
-        SingleBasicBlockLivenessInfo(BitVector bv);
+        SingleBasicBlockLivenessInfo(BitVectorMap bv);
 
         //Add the liveness info of current statement to BBLiveVec
-        void pushBitVector(BitVector bv);
+        void pushBitVector(BitVectorMap bv);
 
         //Get the liveness of first statement
-        BitVector getBasicHeadLiveInfo();
+        BitVectorMap getBasicHeadLiveInfo();
 
         //Get the liveness of last statement
-        BitVector getBasicTailLiveInfo();
+        BitVectorMap getBasicTailLiveInfo();
     };
 
     //Record the calculation status of basic block
     struct BasicBlockWorkList {
         deque<BasicBlock*> BasicBlockList;
         map<BasicBlock*, int> state;   //state: 0 for non-calculated, 1 for calculated
-        map<BasicBlock*, BitVector> tailBVMap;   //bitvector of the last statement in Basic Block
+        map<BasicBlock*, BitVectorMap> tailBVMap;   //bitvector of the last statement in Basic Block
 
         BasicBlockWorkList(Function &F);
 
@@ -69,10 +69,10 @@ namespace {
         void popBasicBlockToWorkList();
 
         //Merge two bitvectors
-        BitVector mergeBitVector(BitVector bv1, BitVector bv2, bool approx_para=true);
+        BitVectorMap mergeBitVector(BitVectorMap bv1, BitVectorMap bv2, bool approx_para=true);
 
         //Merge the bitvectors at the entry of the basic block, propagated from the successors backward
-        void mergeTailBVMap(BasicBlock* bb, BitVector bv, bool approx_para=true);
+        void mergeTailBVMap(BasicBlock* bb, BitVectorMap bv, bool approx_para=true);
 
         //Judge whether the worklist is empty or not
         bool isEmpty();
@@ -82,7 +82,7 @@ namespace {
         static char ID;
         BitVectorBase vectorBase;
         map<BasicBlock*, SingleBasicBlockLivenessInfo> BasicBlockLivenessInfo;
-        map<int, BitVector> lineInfo;
+        map<int, BitVectorMap> lineInfo;
 
 
         LiveVariableInBranch() : llvm::FunctionPass(ID) {}
@@ -90,22 +90,22 @@ namespace {
         bool runOnFunction(llvm::Function &F) override;
 
         //Judege the equal relation of two bit vector
-        bool isEqualBitVector(BitVector bv1, BitVector bv2);
+        bool isEqualBitVector(BitVectorMap bv1, BitVectorMap bv2);
 
         //Judge whether the fixed point has been reached
-        bool hasReachedFixedPoint(BasicBlock* bb, BitVector connectBV);
+        bool hasReachedFixedPoint(BasicBlock* bb, BitVectorMap connectBV);
 
         //Get the liveness info at each location in a single basic block and store the liveness info in the map
-        BitVector getLivenessInSingleBB(BasicBlock* bb, BitVector bv);
+        BitVectorMap getLivenessInSingleBB(BasicBlock* bb, BitVectorMap bv);
 
         //Get live variable in the last Basic Block by invoking getLivenessInSingleBB
-        BitVector getLivenessInLastBB(Function &F);
+        BitVectorMap getLivenessInLastBB(Function &F);
 
         //Get empty bit vector storing zero vector
-        BitVector generateEmptyBitVector();
+        BitVectorMap generateEmptyBitVector();
 
         //Update the liveness by Kill and Gen set
-        BitVector transferFunction(BitVector bv, BitVectorBase KillBase, BitVectorBase GenBase);
+        BitVectorMap transferFunction(BitVectorMap bv, BitVectorBase KillBase, BitVectorBase GenBase);
 
         //Print the result
         void printLiveVariableInBranchResult(llvm::StringRef FuncName);
