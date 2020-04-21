@@ -55,7 +55,7 @@ namespace {
         BitVectorMap getLivenessInSingleBB(BasicBlock*, BitVectorMap);
 
         // Update the liveness
-        BitVectorMap transferFunction(BitVectorMap, BitVectorBase, BitVectorBase);
+        void transferFunction(BitVectorMap &, BitVectorBase &, BitVectorBase &);
 
         // Print the result
         void printLiveVariableInBranchResult(llvm::StringRef FuncName);
