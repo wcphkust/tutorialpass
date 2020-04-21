@@ -71,7 +71,15 @@ BitVectorMap SingleBasicBlockLivenessInfo::getBasicTailLiveInfo() {
 bool LiveVariableInBranch::runOnFunction(llvm::Function &F) {
     /* TODO */
 
-    printLiveVariableInBranchResult(F.getName());
+    // Step 1: Record the basic blocks in the function
+
+
+    // Step 2: Collect and generate constraint for the liveness
+
+
+    // Step 3: Output the analysis result
+
+
     return false;
 }
 
