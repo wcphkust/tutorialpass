@@ -26,7 +26,39 @@ using namespace llvm;
 
 char LiveVariableInBranch::ID = 0;
 
+//----------------------------------------------------------
+// Implementation of SingleBasicBlockLivenessInfo
+// Description: Record liveness of variables in each basic block
+//----------------------------------------------------------
 
+/*
+ * SingleBasicBlockLivenessInfo constructor
+ * Ininitialize by inserting the bit vector of the last statement
+ */
+SingleBasicBlockLivenessInfo::SingleBasicBlockLivenessInfo(BitVectorMap BV) {
+    /* TODO */
+}
+
+/*
+ * Add the liveness info of current statement to BBLiveVec
+ */
+void SingleBasicBlockLivenessInfo::pushBitVector(BitVectorMap BV) {
+    /* TODO */
+}
+
+/*
+ * Get the liveness of first statement
+ */
+BitVectorMap SingleBasicBlockLivenessInfo::getBasicHeadLiveInfo() {
+    /* TODO */
+}
+
+/*
+ * Get the liveness of last statement
+ */
+BitVectorMap SingleBasicBlockLivenessInfo::getBasicTailLiveInfo() {
+    /* TODO */
+}
 
 
 /*----------------------------------------------------------
@@ -35,60 +67,26 @@ char LiveVariableInBranch::ID = 0;
 */
 
 
-// Main function of Live Variable Analysis in Branch, and can be generalized to loop
+// Main function of Live Variable Analysis in Branch
 bool LiveVariableInBranch::runOnFunction(llvm::Function &F) {
+    /* TODO */
 
-    // Collect the basic blocks in the function
-
-
-    // Step 0: Initialize the tail statement of the last basic block
-
-
-    // Fixed point algorithm
-    /*
-     * Step 1: Update one basic block at the head of the queue
-     * Step 2: Propagate to the previous one, initialize the bitvector of tail statement
-     */
-
-    // Output the analysis result
-
+    printLiveVariableInBranchResult(F.getName());
     return false;
-}
-
-
-/*
- * Judege the equal relation of two bit vector
- * Parameter: BitVectorMap bv1, bv2
- * Return: true if bv1=bv2, otherwise false
-*/
- bool LiveVariableInBranch::isEqualBitVector(BitVectorMap bv1, BitVectorMap bv2) {
-
- }
-
-
-/*
- * Judge whether the fixed point has been reached
- * Parameter:
- *   bb: the basic block to be checked
- *   connectBV: the incoming bit vector
- * Return:
- *   true: FP has reached; false: otherwise
- */
-bool LiveVariableInBranch::hasReachedFixedPoint(BasicBlock* bb, BitVectorMap connectBV) {
-
 }
 
 /*
  * Get the liveness info at each location in a single basic block and store the liveness info in the map
  * Parameter:
- *  bb: the pointer of basic block
- *  bv: the initial liveness state, i.e. the liveness info of the last statement
- * Return: the liveness info the first statement
+ *  BB: the pointer of basic block
+ *  BV: the initial liveness state, i.e. the liveness info of the last statement
+ * Return: the liveness info the first statement in the basic block BB
  */
-BitVectorMap LiveVariableInBranch::getLivenessInSingleBB(BasicBlock *bb, BitVectorMap bv) {
+BitVectorMap LiveVariableInBranch::getLivenessInSingleBB(BasicBlock &BB, BitVectorMap BV) {
     BitVectorBase KillBase, GenBase;
     BitVectorMap BlockRes;
 
+    /* TODO */
 
     return BlockRes;
 }
@@ -98,13 +96,13 @@ BitVectorMap LiveVariableInBranch::getLivenessInSingleBB(BasicBlock *bb, BitVect
  * Update the liveness by Kill and Gen set
  * Formula: f(x) = (x - Kill) \cup Gen
  * Parameter:
- *   bv: the liveness info at the entry of the statement
+ *   BV: the liveness info at the entry of the statement
  *   KillBase, GenBase: Kill set and Gen set
  * Return:
  *   The updated liveness info after kill and gen opertion
  */
-void LiveVariableInBranch::transferFunction(BitVectorMap& bv, BitVectorBase& KillBase, BitVectorBase& GenBase) {
-
+void LiveVariableInBranch::transferFunction(BitVectorMap &BV, BitVectorBase &KillBase, BitVectorBase &GenBase) {
+    /* TODO */
 }
 
 /*
@@ -118,6 +116,7 @@ void LiveVariableInBranch::printLiveVariableInBranchResult(StringRef FuncName) {
            << "LLVM-TUTOR: Live Variable results for `" << FuncName
            << "\n"
            << "=================================================\n";
+    /* TODO */
 
 }
 
@@ -138,6 +137,5 @@ static llvm::RegisterStandardPasses
         registerBBinLoopCounterPass(PassManagerBuilder::EP_EarlyAsPossible,
                                     [](const PassManagerBuilder &Builder,
                                        legacy::PassManagerBase &PM) {
-                                        PM.add(new VariableInBB());
                                         PM.add(new LiveVariableInBranch());
                                     });
