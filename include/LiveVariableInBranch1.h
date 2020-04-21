@@ -29,35 +29,51 @@ using namespace llvm;
 //------------------------------------------------------------------------------
 
 namespace {
-    typedef std::vector<string> BitVectorBase;
-    typedef std::map<string, int> BitVectorMap;
-    typedef std::queue<BitVectorMap> BitVectorList;
+    typedef std::vector<string> BitVectorBase;         /* List of variable names in functions*/
+    typedef std::map<string, int> BitVectorMap;        /* Liveness info at a program location*/
+    typedef std::queue<BitVectorMap> BitVectorList;    /* Liveness info of the program locations along a forward/backward path */
 
+    //Record liveness of variables in each basic block
+    struct SingleBasicBlockLivenessInfo {
+        BitVectorList BBLiveVec;
+
+        SingleBasicBlockLivenessInfo() {}
+
+        //Ininitialize by inserting the bit vector of the last statement
+        SingleBasicBlockLivenessInfo(BitVectorMap bv);
+
+        //Add the liveness info of current statement to BBLiveVec
+        void pushBitVector(BitVectorMap bv);
+
+        //Get the liveness of first statement
+        BitVectorMap getBasicHeadLiveInfo();
+
+        //Get the liveness of last statement
+        BitVectorMap getBasicTailLiveInfo();
+    };
 
     struct LiveVariableInBranch : public llvm::FunctionPass {
         static char ID;
 
+        /* Record the variable names in function */
         BitVectorBase vectorBase;
+
+        /* Record the liveness information of basic block */
         map<BasicBlock*, SingleBasicBlockLivenessInfo> BasicBlockLivenessInfo;
-        map<int, BitVectorMap> lineInfo;
+
 
         LiveVariableInBranch() : llvm::FunctionPass(ID) {}
         void getAnalysisUsage(llvm::AnalysisUsage &AU) const;
         bool runOnFunction(llvm::Function &F) override;
 
-        // Judege the equal relation of two bit vector
-        bool isEqualBitVector(BitVectorMap, BitVectorMap);
 
-        // Judge whether the fixed point has been reached
-        bool hasReachedFixedPoint(BasicBlock*, BitVectorMap);
-
-        // Get the liveness info at each location in a single basic block and store the liveness info in the map
+        /* Get the liveness info in a basic block and store it in the map */
         BitVectorMap getLivenessInSingleBB(BasicBlock*, BitVectorMap);
 
-        // Update the liveness
+        /* Update the liveness */
         BitVectorMap transferFunction(BitVectorMap, BitVectorBase, BitVectorBase);
 
-        // Print the result
+        /* Print the result */
         void printLiveVariableInBranchResult(llvm::StringRef FuncName);
     };
 }
