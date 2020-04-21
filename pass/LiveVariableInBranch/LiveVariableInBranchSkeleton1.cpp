@@ -1,6 +1,5 @@
 //
-// Created by Sunshine on 16/3/2020.
-// Reference: https://stackoverflow.com/questions/47978363/get-variable-name-in-llvm-pass
+// Created by Sunshine on 16/3/2020
 //
 
 #include <iostream>
@@ -71,7 +70,7 @@ BitVectorMap SingleBasicBlockLivenessInfo::getBasicTailLiveInfo() {
 bool LiveVariableInBranch::runOnFunction(llvm::Function &F) {
     /* TODO */
 
-    // Step 1: Record the basic blocks in the function
+    // Step 1: Record the basic blocks in the function and construct
 
 
     // Step 2: Collect and generate constraint for the liveness

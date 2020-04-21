@@ -24,6 +24,10 @@
 using namespace std;
 using namespace llvm;
 
+/*
+ * The skeleton is for reference only, and you can use the data structure as you like
+ */
+
 //------------------------------------------------------------------------------
 // PM interface
 //------------------------------------------------------------------------------
@@ -59,7 +63,7 @@ namespace {
         BitVectorBase vectorBase;
 
         /* Record the liveness information of basic block */
-        map<BasicBlock *, SingleBasicBlockLivenessInfo> BasicBlockLivenessInfo;
+        map<BasicBlock &, SingleBasicBlockLivenessInfo> BasicBlockLivenessInfo;
 
 
         LiveVariableInBranch() : llvm::FunctionPass(ID) {}
@@ -74,7 +78,7 @@ namespace {
         void transferFunction(BitVectorMap &, BitVectorBase &, BitVectorBase &);
 
         /* Print the result */
-        void printLiveVariableInBranchResult(llvm::StringRef FuncName);
+        void printLiveVariableInBranchResult(llvm::StringRef);
     };
 }
 
