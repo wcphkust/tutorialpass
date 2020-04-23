@@ -21,7 +21,6 @@ message(STATUS "Found: ${REAL_LLVM_CONFIG}")
 #get compile flags
 execute_process(COMMAND "${REAL_LLVM_CONFIG}" --cxxflags  OUTPUT_VARIABLE CPP_LLVM_CONFIG OUTPUT_STRIP_TRAILING_WHITESPACE)
 
-execute_process(COMMAND "${REAL_LLVM_CONFIG}" --libs OUTPUT_VARIABLE LIBS_LLVM_CONFIG OUTPUT_STRIP_TRAILING_WHITESPACE)
 #get system lib link flags
 execute_process(COMMAND "${REAL_LLVM_CONFIG}" --system-libs OUTPUT_VARIABLE SYSTEM_LIBS_LLVM_CONFIG OUTPUT_STRIP_TRAILING_WHITESPACE)
 
@@ -41,12 +40,8 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 ${CPP_LLVM_CONFIG}")
 
 add_library(ClangTypeAnalysis SHARED ClangTypeAnalysis.cpp)
 
-set(DISABLE_LLVM_LINK_LLVM_DYLIB Off)
-
-llvm_map_components_to_libnames(llvm_libs support irreader bitwriter option)
-
 set (LLVM_LIBS
-        ${llvm_libs}
+        LLVM
         )
 
 set(CLANG_LIBS

@@ -69,10 +69,10 @@ namespace {
         void popBasicBlockToWorkList();
 
         //Merge two bitvectors
-        BitVectorMap mergeBitVector(BitVectorMap bv1, BitVectorMap bv2, bool approx_para=true);
+        BitVectorMap mergeBitVector(BitVectorMap &bv1, BitVectorMap &bv2, bool approx_para=true);
 
         //Merge the bitvectors at the entry of the basic block, propagated from the successors backward
-        void mergeTailBVMap(BasicBlock* bb, BitVectorMap bv, bool approx_para=true);
+        void mergeTailBVMap(BasicBlock* bb, BitVectorMap &bv, bool approx_para=true);
 
         //Judge whether the worklist is empty or not
         bool isEmpty();
@@ -86,17 +86,17 @@ namespace {
 
 
         LiveVariableInBranch() : llvm::FunctionPass(ID) {}
-        void getAnalysisUsage(llvm::AnalysisUsage &AU) const;
-        bool runOnFunction(llvm::Function &F) override;
+        void getAnalysisUsage(AnalysisUsage &AU) const;
+        bool runOnFunction(Function &F) override;
 
         //Judege the equal relation of two bit vector
-        bool isEqualBitVector(BitVectorMap bv1, BitVectorMap bv2);
+        bool isEqualBitVector(BitVectorMap &bv1, BitVectorMap &bv2);
 
         //Judge whether the fixed point has been reached
-        bool hasReachedFixedPoint(BasicBlock* bb, BitVectorMap connectBV);
+        bool hasReachedFixedPoint(BasicBlock* bb, BitVectorMap &connectBV);
 
         //Get the liveness info at each location in a single basic block and store the liveness info in the map
-        BitVectorMap getLivenessInSingleBB(BasicBlock* bb, BitVectorMap bv);
+        BitVectorMap getLivenessInSingleBB(BasicBlock* bb, BitVectorMap &bv);
 
         //Get live variable in the last Basic Block by invoking getLivenessInSingleBB
         BitVectorMap getLivenessInLastBB(Function &F);
@@ -105,10 +105,10 @@ namespace {
         BitVectorMap generateEmptyBitVector();
 
         //Update the liveness by Kill and Gen set
-        BitVectorMap transferFunction(BitVectorMap bv, BitVectorBase KillBase, BitVectorBase GenBase);
+        BitVectorMap transferFunction(BitVectorMap &bv, BitVectorBase &KillBase, BitVectorBase &GenBase);
 
         //Print the result
-        void printLiveVariableInBranchResult(llvm::StringRef FuncName);
+        void printLiveVariableInBranchResult(StringRef FuncName);
     };
 }
 

@@ -4,6 +4,7 @@
 //
 
 #include <iostream>
+#include <fstream>
 #include <set>
 #include <stack>
 #include <vector>
@@ -116,7 +117,7 @@ void BasicBlockWorkList::popBasicBlockToWorkList() {
 }
 
 //Merge two bitvectors
-BitVectorMap BasicBlockWorkList::mergeBitVector(BitVectorMap bv1, BitVectorMap bv2, bool approx_para) {
+BitVectorMap BasicBlockWorkList::mergeBitVector(BitVectorMap &bv1, BitVectorMap &bv2, bool approx_para) {
     BitVectorMap bv;
     for (auto it = bv1.begin(); it != bv1.end(); it++) {
         if (approx_para) {
@@ -135,7 +136,7 @@ BitVectorMap BasicBlockWorkList::mergeBitVector(BitVectorMap bv1, BitVectorMap b
  *   bv: bit vector propagated backward from a successor
  *   approx_para: true for may analysis, false for must analysis, default to true
  */
-void BasicBlockWorkList::mergeTailBVMap(BasicBlock* bb, BitVectorMap bv, bool approx_para) {
+void BasicBlockWorkList::mergeTailBVMap(BasicBlock* bb, BitVectorMap &bv, bool approx_para) {
     auto it = tailBVMap.find(bb);
     if (it == tailBVMap.end()) {
         tailBVMap[bb] = bv;
@@ -215,7 +216,7 @@ bool LiveVariableInBranch::runOnFunction(llvm::Function &F) {
  * Parameter: BitVectorMap bv1, bv2
  * Return: true if bv1=bv2, otherwise false
 */
- bool LiveVariableInBranch::isEqualBitVector(BitVectorMap bv1, BitVectorMap bv2) {
+ bool LiveVariableInBranch::isEqualBitVector(BitVectorMap &bv1, BitVectorMap &bv2) {
      for (auto it = bv1.begin(); it != bv1.end(); it++) {
          if (bv1[it->first] != bv2[it->first]) {
              return false;
@@ -233,7 +234,7 @@ bool LiveVariableInBranch::runOnFunction(llvm::Function &F) {
  * Return:
  *   true: FP has reached; false: otherwise
  */
-bool LiveVariableInBranch::hasReachedFixedPoint(BasicBlock* bb, BitVectorMap connectBV) {
+bool LiveVariableInBranch::hasReachedFixedPoint(BasicBlock* bb, BitVectorMap &connectBV) {
     if (BasicBlockLivenessInfo.find(bb) == BasicBlockLivenessInfo.end()) {
         return false;
     }
@@ -253,7 +254,7 @@ bool LiveVariableInBranch::hasReachedFixedPoint(BasicBlock* bb, BitVectorMap con
  *  bv: the initial liveness state, i.e. the liveness info of the last statement
  * Return: the liveness info the first statement
  */
-BitVectorMap LiveVariableInBranch::getLivenessInSingleBB(BasicBlock *bb, BitVectorMap bv) {
+BitVectorMap LiveVariableInBranch::getLivenessInSingleBB(BasicBlock *bb, BitVectorMap &bv) {
     SingleBasicBlockLivenessInfo info = SingleBasicBlockLivenessInfo(bv);
     BitVectorBase KillBase, GenBase;
 
@@ -288,7 +289,8 @@ BitVectorMap LiveVariableInBranch::getLivenessInSingleBB(BasicBlock *bb, BitVect
             errs() << "-----------------------------" << "\n";
         } else continue;
 
-        BitVectorMap newBv = transferFunction(info.getBasicHeadLiveInfo(), KillBase, GenBase);
+        BitVectorMap headBv = info.getBasicHeadLiveInfo();
+        BitVectorMap newBv = transferFunction(headBv, KillBase, GenBase);
         KillBase.clear();
         GenBase.clear();
 
@@ -337,7 +339,7 @@ BitVectorMap LiveVariableInBranch::generateEmptyBitVector() {
  * Return:
  *   The updated liveness info after kill and gen opertion
  */
-BitVectorMap LiveVariableInBranch::transferFunction(BitVectorMap bv, BitVectorBase KillBase, BitVectorBase GenBase) {
+BitVectorMap LiveVariableInBranch::transferFunction(BitVectorMap &bv, BitVectorBase &KillBase, BitVectorBase &GenBase) {
     for (int i = 0; i < KillBase.size(); i++) {
         if (find(vectorBase.begin(), vectorBase.end(), KillBase[i]) != vectorBase.end()) {
             bv[KillBase[i]] = 0;
@@ -360,7 +362,6 @@ BitVectorMap LiveVariableInBranch::transferFunction(BitVectorMap bv, BitVectorBa
 
 /*
  * Print the result
- * TODO: line should be the index in src
  */
 void LiveVariableInBranch::printLiveVariableInBranchResult(StringRef FuncName) {
     errs() << "================================================="
@@ -369,14 +370,20 @@ void LiveVariableInBranch::printLiveVariableInBranchResult(StringRef FuncName) {
            << "`\n";
     errs() << "=================================================\n";
 
-    for (auto line_it = lineInfo.begin(); line_it != lineInfo.end(); line_it++) {
+    auto line_it = lineInfo.begin();
+    line_it++;
+    ofstream fout("testcase.txt");
+    for ( ; line_it != lineInfo.end(); line_it++) {
         errs() << "line: " << line_it->first << " {";
+        fout << "line:" << line_it->first << " {";
         for (auto bit_it = line_it->second.begin(); bit_it != line_it->second.end(); bit_it++) {
             if (bit_it->second == 1) {
                 errs() << bit_it->first << " ";
+                fout << bit_it->first << " ";
             }
         }
         errs() << "}" << "\n";
+        fout << "}" << "\n";
     }
 
     errs() << "------------------------------" << "\n";
