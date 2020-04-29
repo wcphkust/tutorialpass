@@ -2,11 +2,10 @@
 // Created by Sunshine on 10/3/2020.
 //
 
-#include "../../include/OpcodeCounter.h"
 #include "llvm/IR/LegacyPassManager.h"
 #include "llvm/Passes/PassBuilder.h"
 #include "llvm/Passes/PassPlugin.h"
-#include "llvm/Transforms/IPO/PassManagerBuilder.h"
+#include "OpcodeCounter.h"
 
 using namespace llvm;
 

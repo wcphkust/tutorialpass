@@ -7,20 +7,17 @@
 #include <fstream>
 #include <set>
 #include <stack>
-#include <vector>
 #include <map>
-#include <queue>
-#include <utility>
 #include "llvm/PassAnalysisSupport.h"
 #include "llvm/IR/PassManager.h"
 #include "llvm/IR/BasicBlock.h"
-#include "llvm/Pass.h"
 #include "llvm/Passes/PassBuilder.h"
 #include "llvm/Passes/PassPlugin.h"
 #include "llvm/Transforms/IPO/PassManagerBuilder.h"
 #include "llvm/IR/DebugInfoMetadata.h"
-#include "../../include/LiveVariableInBranch.h"
-#include "../../include/VariableInBB.h"
+#include "LiveVariableInBranch.h"
+#include "VariableInBB.h"
+
 
 using namespace std;
 using namespace llvm;
@@ -372,7 +369,7 @@ void LiveVariableInBranch::printLiveVariableInBranchResult(StringRef FuncName) {
 
     auto line_it = lineInfo.begin();
     line_it++;
-    ofstream fout("testcase.txt");
+    ofstream fout("testoutput.txt");
     for ( ; line_it != lineInfo.end(); line_it++) {
         errs() << "line: " << line_it->first << " {";
         fout << "line:" << line_it->first << " {";

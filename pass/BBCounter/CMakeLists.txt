@@ -1,4 +1,4 @@
-add_library(BBCounterPass BBCounter.cpp)
+add_library(BBCounterPass BBCounter.cpp ../../include/LiveVariableInLoop.h)
 
 target_compile_features(BBCounterPass PRIVATE cxx_range_for cxx_auto_type)
 

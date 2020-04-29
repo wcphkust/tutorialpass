@@ -3,17 +3,14 @@
 //
 
 #include <fstream>
-#include "llvm/ADT/StringMap.h"
 #include "llvm/IR/Module.h"
 #include "llvm/IR/Function.h"
-#include "llvm/IR/PassManager.h"
 #include "llvm/Pass.h"
 #include "llvm/Support/raw_ostream.h"
 #include "llvm/ADT/StringRef.h"
 #include "llvm/IR/Type.h"
 #include "llvm/IR/Argument.h"
-#include "llvm/IR/GlobalValue.h"
-#include "../../include/ParameterCounter.h"
+#include "ParameterCounter.h"
 
 using namespace llvm;
 using namespace std;

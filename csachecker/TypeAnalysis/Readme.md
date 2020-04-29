@@ -20,10 +20,10 @@ ninja
 
 To run with `clang`:
 ```
-clang -Xclang -Xclang -load -Xclang ./libClangTypeAnalysis.so -Xclang -analyze -Xclang -analyzer-checker=homeowrk.ClangTypeAnalysis -g -c ../../../test/test_TypeAnalysis/lambda.cpp
+clang-10 -Xclang -Xclang -load -Xclang ./libClangTypeAnalysis.so -Xclang -analyze -Xclang -analyzer-checker=homeowrk.ClangTypeAnalysis -g -c ../../../test/test_TypeAnalysis/lambda.cpp
 ```
 
 For macOS user:
 ```
-clang-10 -Xclang -load -Xclang cmake-build-release/libClangTypeAnalysis.dylib -Xclang -analyze -Xclang -analyzer-checker=homework.ClangTypeAnalysis -g -c test/lambda.cpp -v
+clang-10 -Xclang -load -Xclang libClangTypeAnalysis.dylib -Xclang -analyze -Xclang -analyzer-checker=homework.ClangTypeAnalysis -g -c lambda.cc -v
 ```

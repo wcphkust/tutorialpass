@@ -1,0 +1,8 @@
+# README
+
+## Remove the redundant design in LiveVariableInBranch
+
+## Implement the transfer function(refer to anders moller's lecture)
+
+## Practice using BitVector in LLVM 10
+

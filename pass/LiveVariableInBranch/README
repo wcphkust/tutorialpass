@@ -1,0 +1,15 @@
+# README
+
+## This pass is the first pass designed by myself
+
+## Although it is named as LiveVariableInBranch, it can support the live variable analysis in loop
+
+## TO BE Improved:
+
+   - The basic block of instruction can be obtained directly by LLVM interface.
+      - SingleBasicBlockLivenessInfo can be omitted by changing the granularity from basic block to instruction
+
+   - BitVector is available in LLVM 10
+      - BitVectorMap can be simplified
+
+## Improved version: refer to pass/LiveVariableInLoop

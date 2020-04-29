@@ -8,11 +8,10 @@
 
 #include "llvm/PassAnalysisSupport.h"
 #include "llvm/IR/PassManager.h"
-#include "llvm/Pass.h"
 #include "llvm/Passes/PassBuilder.h"
 #include "llvm/Passes/PassPlugin.h"
 #include "llvm/Transforms/IPO/PassManagerBuilder.h"
-#include "../../include/BBinLoopCounter.h"
+#include "BBinLoopCounter.h"
 
 using namespace llvm;
 

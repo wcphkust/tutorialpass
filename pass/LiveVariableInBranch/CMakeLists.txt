@@ -1,5 +1,3 @@
-# CSDN: https://blog.csdn.net/bigdog_1027/article/details/79113342
-#add_library(LiveVariableInBBPass MODULE ../VariableInBB/VariableInBB.cpp)
 add_library(LiveVariableInBranchPass MODULE LiveVariableInBranch.cpp)
 target_link_libraries(LiveVariableInBranchPass VariableInBBPass)
 
