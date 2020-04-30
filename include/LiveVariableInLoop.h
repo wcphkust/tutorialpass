@@ -14,6 +14,7 @@
 #include "llvm/Analysis/LoopInfo.h"
 #include "llvm/PassAnalysisSupport.h"
 #include "llvm/ADT/StringMap.h"
+#include "llvm/ADT/BitVector.h"
 #include "llvm/IR/Function.h"
 #include "llvm/IR/PassManager.h"
 #include "llvm/IR/LegacyPassManager.h"
@@ -30,50 +31,26 @@ using namespace llvm;
 //------------------------------------------------------------------------------
 
 namespace {
-    typedef std::vector<string> BitVectorBase;
-    typedef std::map<string, int> BitVectorMap;
-    typedef std::queue<BitVectorMap> BitVectorList;
+    typedef map<string, unsigned> BitVectorBase;
+    typedef deque<Instruction*> (*InstDepsFunc)(Instruction*); //deps for instruction, error prone
 
-    //Record liveness of variables in each basic block
-    struct SingleBasicBlockLivenessInfo {
-        BitVectorList BBLiveVec;
+    struct InstWorkList {
+        deque<Instruction*> workList;   //TO BE polished
+        BitVectorBase varIndex;
+        map<Instruction*, BitVector> instFactMap;
 
-        //Default constructor
-        SingleBasicBlockLivenessInfo() {}
+        InstWorkList() = default;
+        InstWorkList(Function &F, bool isForward);
 
-        //Ininitialize by inserting the bit vector of the last statement
-        SingleBasicBlockLivenessInfo(BitVectorMap bv);
-
-        //Add the liveness info of current statement to BBLiveVec
-        void pushBitVector(BitVectorMap bv);
-
-        //Get the liveness of first statement
-        BitVectorMap getBasicHeadLiveInfo();
-
-        //Get the liveness of last statement
-        BitVectorMap getBasicTailLiveInfo();
-    };
-
-    //Record the calculation status of basic block
-    struct BasicBlockWorkList {
-        deque<BasicBlock*> BasicBlockList;
-        map<BasicBlock*, int> state;   //state: 0 for non-calculated, 1 for calculated
-        map<BasicBlock*, BitVectorMap> tailBVMap;   //bitvector of the last statement in Basic Block
-
-        BasicBlockWorkList(Function &F);
-
-        //Get Basic Block Status: 0 for non-calculated, 1 for calculated
-        int getBasicBlockStatus(BasicBlock* bb);
+        BitVector transferFunction(BitVector &bv, BitVectorBase &KillBase, BitVectorBase &GenBase);
 
         //Add and delete
-        void pushBasicBlockToWorkList(BasicBlock* bb);
-        void popBasicBlockToWorkList();
+        void pushInstToWorkList(Instruction* inst);
+        void pushDepsInstToWorkList(Instruction* inst, InstDepsFunc deps);
+        void popInstToWorkList();
+        Instruction* getWorkListHead();
 
-        //Merge two bitvectors
-        BitVectorMap mergeBitVector(BitVectorMap &bv1, BitVectorMap &bv2, bool approx_para=true);
-
-        //Merge the bitvectors at the entry of the basic block, propagated from the successors backward
-        void mergeTailBVMap(BasicBlock* bb, BitVectorMap &bv, bool approx_para=true);
+        void insertBitVector(Instruction* inst, BitVector& bv);
 
         //Judge whether the worklist is empty or not
         bool isEmpty();
@@ -81,35 +58,27 @@ namespace {
 
     struct LiveVariableInLoop : public llvm::FunctionPass {
         static char ID;
-        BitVectorBase vectorBase;
-        map<BasicBlock*, SingleBasicBlockLivenessInfo> BasicBlockLivenessInfo;
-        map<int, BitVectorMap> lineInfo;
-
+        BitVectorBase varIndex;
+        map<int, BitVector> lineInfo;
+        InstWorkList LVAWorkList;
 
         LiveVariableInLoop() : llvm::FunctionPass(ID) {}
-        void getAnalysisUsage(AnalysisUsage &AU) const;
+
         bool runOnFunction(Function &F) override;
 
-        //Judege the equal relation of two bit vector
-        bool isEqualBitVector(BitVectorMap &bv1, BitVectorMap &bv2);
-
-        //Judge whether the fixed point has been reached
-        bool hasReachedFixedPoint(BasicBlock* bb, BitVectorMap &connectBV);
-
-        //Get the liveness info at each location in a single basic block and store the liveness info in the map
-        BitVectorMap getLivenessInSingleBB(BasicBlock* bb, BitVectorMap &bv);
-
-        //Get live variable in the last Basic Block by invoking getLivenessInSingleBB
-        BitVectorMap getLivenessInLastBB(Function &F);
-
-        //Get empty bit vector storing zero vector
-        BitVectorMap generateEmptyBitVector();
+        //Deps function for instruction in LVA
+        static deque<Instruction*> predDepsFunc(Instruction* inst);
 
         //Update the liveness by Kill and Gen set
-        BitVectorMap transferFunction(BitVectorMap &bv, BitVectorBase &KillBase, BitVectorBase &GenBase);
+        bool transferFunction(Instruction* inst, BitVector& bv);
+
+        //construct liveness info at each line
+        void getLineLivenessInfo();
 
         //Print the result
         void printLiveVariableInLoopResult(StringRef FuncName);
+
+        void getAnalysisUsage(AnalysisUsage &AU) const;
     };
 }
 
