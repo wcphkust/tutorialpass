@@ -165,6 +165,7 @@ bool LiveVariableInBranch::runOnFunction(llvm::Function &F) {
         vectorBase.push_back(*it);
     }
 
+
     /*Step 0: initialize the tail statement of the last basic block*/
     BitVectorMap bv = getLivenessInLastBB(F);
 

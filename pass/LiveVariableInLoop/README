@@ -6,3 +6,4 @@
 
 ## Practice using BitVector in LLVM 10
 
+## TODO: use map to store the state before and after the instruction
