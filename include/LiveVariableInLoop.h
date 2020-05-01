@@ -35,22 +35,32 @@ namespace {
     typedef deque<Instruction*> (*InstDepsFunc)(Instruction*); //deps for instruction, error prone
 
     struct InstWorkList {
+        enum AnalyzeDirection {
+            FORWARD,
+            BACKWORD
+        };
+
         deque<Instruction*> workList;   //TO BE polished
         BitVectorBase varIndex;
-        map<Instruction*, BitVector> instFactMap;
+        map<Instruction*, BitVector> instPreFactMap;    //pre-state of an instruction
+        map<Instruction*, BitVector> instPostFactMap;   //post-state of an instruction
+        AnalyzeDirection direction;
 
         InstWorkList() = default;
-        InstWorkList(Function &F, bool isForward);
+        InstWorkList(Function &F, BitVectorBase pVarIndex, bool isForward);
 
-        BitVector transferFunction(BitVector &bv, BitVectorBase &KillBase, BitVectorBase &GenBase);
+        BitVector transferFunction(BitVector &bv, BitVectorBase &KillBase, BitVectorBase &GenBase);  //Kill-Gen transfer function
+        BitVector join(BitVector& bv1, BitVector& bv2);
+        bool isFixedPoint(BitVector bv, Instruction* inst);    //judge fixed-point by pre-state of an instruction
 
         //Add and delete
-        void pushInstToWorkList(Instruction* inst);
+        bool pushInstToWorkList(Instruction* inst);
         void pushDepsInstToWorkList(Instruction* inst, InstDepsFunc deps);
         void popInstToWorkList();
         Instruction* getWorkListHead();
 
-        void insertBitVector(Instruction* inst, BitVector& bv);
+        void insertPreBitVector(Instruction* inst, BitVector bv);
+        void insertPostBitVector(Instruction* inst, BitVector bv);
 
         //Judge whether the worklist is empty or not
         bool isEmpty();
@@ -70,7 +80,7 @@ namespace {
         static deque<Instruction*> predDepsFunc(Instruction* inst);
 
         //Update the liveness by Kill and Gen set
-        bool transferFunction(Instruction* inst, BitVector& bv);
+        BitVector transferFunction(Instruction* inst, BitVector& bv);
 
         //construct liveness info at each line
         void getLineLivenessInfo();
@@ -79,6 +89,9 @@ namespace {
         void printLiveVariableInLoopResult(StringRef FuncName);
 
         void getAnalysisUsage(AnalysisUsage &AU) const;
+
+        //debug helper function
+        void printBV(BitVector& bv);
     };
 }
 

@@ -30,24 +30,33 @@ char LiveVariableInLoop::ID = 0;
 /*
  * InstWorkList constructor
  * Function &F: the function from which worklist of instruction is created
+ * BitVectorBase varIndex: the mapping from variables to index
  * isForward: is forward-analysis
  *   true: initialize by adding the first instruction of entry
  *   false: initialize by adding the first instruction of entry
  */
-InstWorkList::InstWorkList(Function &F, bool isForward = true) {
+InstWorkList::InstWorkList(Function &F, BitVectorBase pVarIndex, bool isForward = true) {
+    varIndex = pVarIndex;
+    direction = (isForward ? FORWARD : BACKWORD);
     if (isForward) {
         auto it = F.getBasicBlockList().begin();
         BasicBlock* entryBB = &(*it);
         Instruction* firstInst = &(entryBB->front());
+        instPreFactMap[firstInst] = BitVector(pVarIndex.size(), false);
         workList.push_back(firstInst);
     } else {
         auto it = F.getBasicBlockList().rbegin();
         BasicBlock* exitBB = &(*it);
         Instruction* lastInst = &(exitBB->back());
+        instPostFactMap[lastInst] = BitVector(pVarIndex.size(), false);
         workList.push_back(lastInst);
     }
 }
 
+/*
+ * Kill-Gen transfer function
+ * KillBase, GenBase should be passed before the invocation in the caller
+ */
 BitVector InstWorkList::transferFunction(BitVector &bv, BitVectorBase &KillBase, BitVectorBase &GenBase) {
     BitVector kill(varIndex.size(), false);
     BitVector gen(varIndex.size(), false);
@@ -62,32 +71,68 @@ BitVector InstWorkList::transferFunction(BitVector &bv, BitVectorBase &KillBase,
     BitVector resBv(bv);
     resBv &=  kill.flip();
     resBv |= gen;
+    errs() << "resBv in transferFunction: " << resBv.size() << "\n";
     return resBv;
 }
 
 /*
- * Add instruction to worklist
+ * Join operator
+ * TODO: add parameter for may/must mode
  */
-void InstWorkList::pushInstToWorkList(Instruction *inst) {
-    bool isInWorkList = false;
+BitVector InstWorkList::join(BitVector &bv1, BitVector &bv2) {
+    BitVector bv = bv1;
+    //may node, union two bitvectors
+    bv |= bv2;
+    return bv;
+}
+
+
+/*
+ * Fixed point checker
+ * bv: the state of the instruction after transfermation
+ * inst: instruction pointer
+ */
+bool InstWorkList::isFixedPoint(BitVector bv, Instruction* inst) {
+    map<Instruction*, BitVector>* factMap = (direction == BACKWORD ? &instPreFactMap : &instPostFactMap);
+    if (factMap->find(inst) == factMap->end()) {
+        return false;
+    }
+    // Judge whether the original state is covered by the current one(bv)
+    BitVector oldBv = (*factMap)[inst];
+    BitVector joinBv = join(oldBv, bv);
+    return (joinBv == bv);
+}
+
+/*
+ * Add instruction to worklist
+ * Return false if inst has existed, false otherwise
+ */
+bool InstWorkList::pushInstToWorkList(Instruction *inst) {
     for (auto & it : workList) {
         if (inst == it) {
-            isInWorkList = true;
+            return false;
         }
     }
-
-    if (not isInWorkList) {
-        workList.push_back(inst);
-    }
+    workList.push_back(inst);
+    return true;
 }
 
 /*
  * Add the instructions which depend on inst
+ * Update the pre/post-state based on the post/pre-state of inst
  */
 void InstWorkList::pushDepsInstToWorkList(Instruction *inst, InstDepsFunc deps) {
     deque<Instruction*> depInsts = deps(inst);
     for (auto & depInst : depInsts) {
         pushInstToWorkList(depInst);
+        if (direction == BACKWORD) {
+            BitVector postBv = instPreFactMap[inst];
+            insertPostBitVector(depInst, postBv);
+        } else {
+            //FORWARD
+            BitVector preBv = instPostFactMap[inst];
+            insertPreBitVector(depInst, preBv);
+        }
     }
 }
 
@@ -106,10 +151,25 @@ Instruction* InstWorkList::getWorkListHead() {
 }
 
 /*
- * Insert bit vector
+ * Insert bit vector into PreFactMap
  */
-void InstWorkList::insertBitVector(Instruction* inst, BitVector &bv) {
-    instFactMap[inst] = bv;
+void InstWorkList::insertPreBitVector(Instruction* inst, BitVector bv) {
+    if (instPreFactMap.count(inst) == 0) {
+        instPreFactMap[inst] = bv;
+    } else {
+        instPreFactMap[inst] |= bv;
+    }
+}
+
+/*
+ * Insert bit vector into PostFactMap
+ */
+void InstWorkList::insertPostBitVector(Instruction* inst, BitVector bv) {
+    if (instPostFactMap.count(inst) == 0) {
+        instPostFactMap[inst] = bv;
+    } else {
+        instPostFactMap[inst] |= bv;
+    }
 }
 
 /*
@@ -122,7 +182,7 @@ bool InstWorkList::isEmpty() {
 
 //----------------------------------------------------------
 // Implementation of LiveVariableInLoop
-//----------------------------------------------------------
+//---------------------------------------------------------—
 
 /*
  * Main function of Live Variable Analysis in Branch, and can be generalized to loop
@@ -138,29 +198,59 @@ bool LiveVariableInLoop::runOnFunction(llvm::Function &F) {
     }
 
     errs() << "debug info 1" << "\n";
+    errs() << varIndex.size() << "\n";
     errs() << index << "\n";
 
     //collect the instruction at the exit node and initialize the worklist
-    LVAWorkList = InstWorkList(F, false);
+    LVAWorkList = InstWorkList(F, varIndex,  false);
 
     //Worklist algorithm
     int iterNum = 0;
     while (not LVAWorkList.isEmpty()) {
         iterNum++;
         Instruction* inst = LVAWorkList.getWorkListHead();
-        BitVector bv = LVAWorkList.instFactMap[inst];
-        if (transferFunction(inst, bv)) {
-            LVAWorkList.pushDepsInstToWorkList(inst, predDepsFunc);  //TO BE reviewed
+
+        //errs() << "inst: ";
+        //inst->print(errs());
+        //errs() << "\n";
+
+        BitVector postBv = LVAWorkList.instPostFactMap[inst];
+        BitVector preBv;
+
+        if (llvm::isa<llvm::StoreInst>(*inst) or llvm::isa<llvm::LoadInst>(*inst)) {
+            preBv = transferFunction(inst, postBv);
+        } else {
+            preBv = postBv;
+        }
+        
+        bool isFixedPointReached = LVAWorkList.isFixedPoint(preBv, inst);
+
+        if (not isFixedPointReached) {
+            //errs() << "BV in this iteration" << "\n";
+            //printBV(preBv);
+            //errs() << "\n";
+            //errs() << "BV in the last iteration" << "\n";
+            //printBV(LVAWorkList.instPreFactMap[inst]);
+            //errs() << "\n";
+
+            LVAWorkList.insertPreBitVector(inst, preBv);
+            LVAWorkList.pushDepsInstToWorkList(inst, predDepsFunc);
         }
         LVAWorkList.popInstToWorkList();
+
+        errs() << "List size: " << LVAWorkList.workList.size() << "\n";
     }
 
     errs() << "---------------------------------" << "\n";
     errs() << "The iteration number of worklist is " << iterNum << "\n";
     errs() << "---------------------------------" << "\n";
 
+    //error, varIndex has been changed
+    errs() << "var count " << varIndex.size() << "\n";
     getLineLivenessInfo();
+    errs() << "var count " << varIndex.size() << "\n";
     printLiveVariableInLoopResult(F.getName());
+    errs() << "var count " << index << "\n";
 
     return false;
 }
@@ -174,10 +264,20 @@ bool LiveVariableInLoop::runOnFunction(llvm::Function &F) {
 deque<Instruction*> LiveVariableInLoop::predDepsFunc(Instruction* inst) {
     deque<Instruction*> predecessor;
     BasicBlock* bb = inst->getParent();
+    errs() << "\n" << "----------------------" << "\n";
+    errs() << "Pre Nodes for instruction:";
+    inst->print(errs());
+    errs() << "\n";
+
+
     if (inst == &(bb->front())) {
-        for (auto it = pred_begin(bb); it != pred_begin(bb); it++) {
+        for (auto it = pred_begin(bb); it != pred_end(bb); it++) {
             Instruction* preInst = &((*it)->back());
-            predecessor.push_back(preInst);
+            if (not isa<llvm::AllocaInst>(*preInst)) {
+                predecessor.push_back(preInst);
+            }
+            preInst->print(errs());
+            errs() << "\n";
         }
     } else {
         for (auto it = bb->getInstList().rbegin(); it != bb->getInstList().rend(); it++) {
@@ -185,23 +285,25 @@ deque<Instruction*> LiveVariableInLoop::predDepsFunc(Instruction* inst) {
             if (inst == curInst) {
                 it++;
                 Instruction* preInst = &(*it);
-                predecessor.push_back(preInst);
+                if (not isa<llvm::AllocaInst>(*preInst)) {
+                    predecessor.push_back(preInst);
+                }
+                preInst->print(errs());
+                errs() << "\n";
             }
         }
     }
+    errs() << "\n" << "----------------------" << "\n";
     return predecessor;
 }
 
 /*
- * Get the liveness info at each location in a single instruction and store the liveness info in the map
- * Parameter:
- *  bb: the pointer of instruction
- *  bv: the initial liveness state, i.e. the liveness info of the last statement
- * Return: the liveness info the first statement
+ * Transfer function for instruction
  */
-bool LiveVariableInLoop::transferFunction(Instruction *inst, BitVector &bv) {
+BitVector LiveVariableInLoop::transferFunction(Instruction *inst, BitVector &bv) {
     BitVectorBase KillBase, GenBase;
 
+    //store can be omitted
     if (llvm::isa<llvm::StoreInst>(*inst)) {
         //Store
         errs() << "-----------------------------" << "\n";
@@ -209,10 +311,14 @@ bool LiveVariableInLoop::transferFunction(Instruction *inst, BitVector &bv) {
         errs() << (*inst) << "\n";
         auto op = inst->op_begin();
         errs() << "Gen:" << op->get()->getName() << "\n";
-        GenBase[op->get()->getName()] = varIndex[op->get()->getName()];
+        if (varIndex.count(op->get()->getName()) > 0) {
+            GenBase[op->get()->getName()] = varIndex[op->get()->getName()];
+        }
         op++;
         errs() << "Kill:" << op->get()->getName() << "\n";
-        KillBase[op->get()->getName()] = varIndex[op->get()->getName()];
+        if (varIndex.count(op->get()->getName()) > 0) {
+            KillBase[op->get()->getName()] = varIndex[op->get()->getName()];
+        }
         errs() << "-----------------------------" << "\n";
     } else if (llvm::isa<llvm::LoadInst>(*inst)) {
         //Load
@@ -221,40 +327,46 @@ bool LiveVariableInLoop::transferFunction(Instruction *inst, BitVector &bv) {
         errs() << (*inst) << "\n";
         auto op = inst->op_begin();
         errs() << "Kill:" << inst->getName() << "\n";
-        KillBase[inst->getName()] = varIndex[inst->getName()];
+        if (varIndex.count(inst->getName()) > 0) {
+            KillBase[inst->getName()] = varIndex[inst->getName()];
+        }
         errs() << "Gen:" << op->get()->getName() << "\n";
-        GenBase[op->get()->getName()] = varIndex[op->get()->getName()];
+        if (varIndex.count(op->get()->getName()) > 0) {
+            GenBase[op->get()->getName()] = varIndex[op->get()->getName()];
+        }
         errs() << "-----------------------------" << "\n";
     }
 
-    KillBase.clear();
-    GenBase.clear();
-
-    errs() << "line number: " << inst->getDebugLoc().getLine();
-
     BitVector newBv = LVAWorkList.transferFunction(bv, KillBase, GenBase);
-    LVAWorkList.insertBitVector(inst, newBv);
+    errs() << "newBv in transferFunction " << "\n";
+    printBV(newBv);
 
-    return (bv == newBv);
+    return newBv;
 }
 
-
 /*
- * Construct liveness info at each line
- * Assumption:
- *   inst1, inst2: two keys in instFactMap, correspond to the same line in source file
- *   The iteration order in getLineLivenessInfo consist with their order in CFG
+ * Construct liveness info at each line(the Alloca instruction is filtered)
  */
 void LiveVariableInLoop::getLineLivenessInfo() {
-    for (auto it = LVAWorkList.instFactMap.begin(); it != LVAWorkList.instFactMap.end(); it++) {
-        Instruction* inst = it->first;
-        BitVector bv = it->second;
-        int instLine = inst->getDebugLoc().getLine();
-        if (lineInfo.find(instLine) == lineInfo.end()) {
-            lineInfo[instLine] = bv;
-        } else {
-            //error prone if the assumption does not hold
-            lineInfo[instLine] = bv;
+    int n = 0;
+
+    for (auto it : LVAWorkList.instPreFactMap) {
+        Instruction* inst = it.first;
+        BitVector bv = it.second;
+        if (llvm::isa<llvm::StoreInst>(*inst) or llvm::isa<llvm::LoadInst>(*inst)) {
+            int instLine = inst->getDebugLoc().getLine();
+            if (lineInfo.find(instLine) == lineInfo.end()) {
+                lineInfo[instLine] = bv;
+            } else {
+                //error prone if the assumption does not hold
+                lineInfo[instLine] |= bv;
+            }
+            errs() << n << "\n";
+            errs() << "At line " << instLine << "\n";
+            errs() << "Bit Vector ";
+            printBV(bv);
+            errs() << "\n";
+            n++;
         }
     }
 }
@@ -269,34 +381,55 @@ void LiveVariableInLoop::printLiveVariableInLoopResult(StringRef FuncName) {
            << "`\n";
     errs() << "=================================================\n";
 
-    auto line_it = lineInfo.begin();
     ofstream fout("testoutput.txt");
 
-    map<int, string> bv2varName;
+    map<int, string> bvIndex2varName;
+    errs() << "varIndex size in printLiveVarialbeInLoopResult" << "\n";
+    errs() << varIndex.size() << "\n";
+
     for (auto it = varIndex.begin(); it != varIndex.end(); it++) {
-        bv2varName[it->second] = it->first;
+        errs() << it->second << " : " << it->first << "\n";
+        bvIndex2varName[it->second] = it->first;
     }
 
-    for ( ; line_it != lineInfo.end(); line_it++) {
+    for (auto line_it = lineInfo.begin(); line_it != lineInfo.end(); line_it++) {
         errs() << "line: " << line_it->first << " {";
         fout << "line:" << line_it->first << " {";
 
         BitVector bv = line_it->second;
-        int varIndexInBVBase = 0;
-        for (auto bit_it = bv.set_bits_begin(); bit_it != bv.set_bits_end(); bit_it++) {
-            if (*bit_it == 1) {
-                string valueName = bv2varName[varIndexInBVBase];
-                errs() << " ";
-                fout << " ";
+        for (int i = 0; i < bv.size(); i++) {
+            if (bv.test(i)) {                          //i-th bit is 1
+                string valueName = bvIndex2varName[i];
+                errs() << valueName << " ";
+                fout << valueName << " ";
             }
-            varIndexInBVBase++;
         }
         errs() << "}" << "\n";
         fout << "}" << "\n";
     }
 
+    // varIndex output
+    for (auto it : varIndex) {
+        errs() << it.first << " " << it.second << "\n";
+    }
+
     errs() << "------------------------------" << "\n";
     errs() << "-------------------------------------------------" << "\n\n";
+}
+
+
+/*
+ * Print BitVector
+ */
+void LiveVariableInLoop::printBV(BitVector& bv) {
+    for (int i = 0; i < bv.size(); i++) {
+        if (bv.test(i)) {
+            errs() << "1";
+        } else {
+            errs() << "0";
+        }
+    }
+    errs() << "\n";
 }
 
 /*

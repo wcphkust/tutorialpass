@@ -7,3 +7,386 @@
 ## Practice using BitVector in LLVM 10
 
 ## TODO: use map to store the state before and after the instruction
+
+
+
+
+Pre Nodes for instruction:  %4 = load i32, i32* %x, align 4, !dbg !39
+  br i1 %cmp2, label %if.then, label %if.else, !dbg !38
+
+----------------------
+List size: 2
+inst:   %3 = load i32, i32* %r, align 4, !dbg !36
+-----------------------------
+Load instruction
+  %3 = load i32, i32* %r, align 4, !dbg !36
+Kill:
+Gen:r
+-----------------------------
+resBv in transferFunction: 4
+newBv in transferFunction
+1110
+
+----------------------
+Pre Nodes for instruction:  %3 = load i32, i32* %r, align 4, !dbg !36
+  br i1 %cmp1, label %land.lhs.true, label %if.else, !dbg !35
+
+----------------------
+List size: 2
+inst:   br i1 %cmp2, label %if.then, label %if.else, !dbg !38
+resBv in transferFunction: 4
+newBv in transferFunction
+1100
+
+----------------------
+Pre Nodes for instruction:  br i1 %cmp2, label %if.then, label %if.else, !dbg !38
+  %cmp2 = icmp slt i32 %3, 180, !dbg !37
+
+----------------------
+List size: 2
+inst:   br i1 %cmp1, label %land.lhs.true, label %if.else, !dbg !35
+resBv in transferFunction: 4
+newBv in transferFunction
+1110
+
+----------------------
+Pre Nodes for instruction:  br i1 %cmp1, label %land.lhs.true, label %if.else, !dbg !35
+  %cmp1 = icmp sgt i32 %2, 100, !dbg !34
+
+----------------------
+List size: 2
+inst:   %cmp2 = icmp slt i32 %3, 180, !dbg !37
+resBv in transferFunction: 4
+newBv in transferFunction
+1100
+
+----------------------
+Pre Nodes for instruction:  %cmp2 = icmp slt i32 %3, 180, !dbg !37
+  %3 = load i32, i32* %r, align 4, !dbg !36
+
+----------------------
+List size: 2
+inst:   %cmp1 = icmp sgt i32 %2, 100, !dbg !34
+resBv in transferFunction: 4
+newBv in transferFunction
+1110
+
+----------------------
+Pre Nodes for instruction:  %cmp1 = icmp sgt i32 %2, 100, !dbg !34
+  %2 = load i32, i32* %r, align 4, !dbg !31
+
+----------------------
+List size: 2
+inst:   %3 = load i32, i32* %r, align 4, !dbg !36
+-----------------------------
+Load instruction
+  %3 = load i32, i32* %r, align 4, !dbg !36
+Kill:
+Gen:r
+-----------------------------
+resBv in transferFunction: 4
+newBv in transferFunction
+1100
+
+----------------------
+Pre Nodes for instruction:  %3 = load i32, i32* %r, align 4, !dbg !36
+  br i1 %cmp1, label %land.lhs.true, label %if.else, !dbg !35
+
+----------------------
+List size: 2
+inst:   %2 = load i32, i32* %r, align 4, !dbg !31
+-----------------------------
+Load instruction
+  %2 = load i32, i32* %r, align 4, !dbg !31
+Kill:
+Gen:r
+-----------------------------
+resBv in transferFunction: 4
+newBv in transferFunction
+1110
+
+----------------------
+Pre Nodes for instruction:  %2 = load i32, i32* %r, align 4, !dbg !31
+  br i1 %cmp, label %for.body, label %for.end, !dbg !30
+
+----------------------
+List size: 2
+inst:   br i1 %cmp1, label %land.lhs.true, label %if.else, !dbg !35
+resBv in transferFunction: 4
+newBv in transferFunction
+1100
+
+----------------------
+Pre Nodes for instruction:  br i1 %cmp1, label %land.lhs.true, label %if.else, !dbg !35
+  %cmp1 = icmp sgt i32 %2, 100, !dbg !34
+
+----------------------
+List size: 2
+inst:   br i1 %cmp, label %for.body, label %for.end, !dbg !30
+resBv in transferFunction: 4
+newBv in transferFunction
+1110
+
+----------------------
+Pre Nodes for instruction:  br i1 %cmp, label %for.body, label %for.end, !dbg !30
+  %cmp = icmp slt i32 %1, 200, !dbg !29
+
+----------------------
+List size: 2
+inst:   %cmp1 = icmp sgt i32 %2, 100, !dbg !34
+resBv in transferFunction: 4
+newBv in transferFunction
+1100
+
+----------------------
+Pre Nodes for instruction:  %cmp1 = icmp sgt i32 %2, 100, !dbg !34
+  %2 = load i32, i32* %r, align 4, !dbg !31
+
+----------------------
+List size: 2
+inst:   %cmp = icmp slt i32 %1, 200, !dbg !29
+resBv in transferFunction: 4
+newBv in transferFunction
+1110
+
+----------------------
+Pre Nodes for instruction:  %cmp = icmp slt i32 %1, 200, !dbg !29
+  %1 = load i32, i32* %r, align 4, !dbg !26
+
+----------------------
+List size: 2
+inst:   %2 = load i32, i32* %r, align 4, !dbg !31
+-----------------------------
+Load instruction
+  %2 = load i32, i32* %r, align 4, !dbg !31
+Kill:
+Gen:r
+-----------------------------
+resBv in transferFunction: 4
+newBv in transferFunction
+1100
+
+----------------------
+Pre Nodes for instruction:  %2 = load i32, i32* %r, align 4, !dbg !31
+  br i1 %cmp, label %for.body, label %for.end, !dbg !30
+
+----------------------
+List size: 2
+inst:   %1 = load i32, i32* %r, align 4, !dbg !26
+-----------------------------
+Load instruction
+  %1 = load i32, i32* %r, align 4, !dbg !26
+Kill:
+Gen:r
+-----------------------------
+resBv in transferFunction: 4
+newBv in transferFunction
+1110
+
+----------------------
+Pre Nodes for instruction:  %1 = load i32, i32* %r, align 4, !dbg !26
+  br label %for.cond, !dbg !50, !llvm.loop !51
+  br label %for.cond, !dbg !25
+
+----------------------
+List size: 3
+inst:   br i1 %cmp, label %for.body, label %for.end, !dbg !30
+resBv in transferFunction: 4
+newBv in transferFunction
+1100
+
+----------------------
+Pre Nodes for instruction:  br i1 %cmp, label %for.body, label %for.end, !dbg !30
+  %cmp = icmp slt i32 %1, 200, !dbg !29
+
+----------------------
+List size: 3
+inst:   br label %for.cond, !dbg !50, !llvm.loop !51
+resBv in transferFunction: 4
+newBv in transferFunction
+1110
+
+----------------------
+Pre Nodes for instruction:  br label %for.cond, !dbg !50, !llvm.loop !51
+  store i32 %inc, i32* %r, align 4, !dbg !49
+
+----------------------
+List size: 3
+inst:   br label %for.cond, !dbg !25
+resBv in transferFunction: 4
+newBv in transferFunction
+1110
+
+----------------------
+Pre Nodes for instruction:  br label %for.cond, !dbg !25
+  store i32 %div, i32* %y, align 4, !dbg !24
+
+----------------------
+List size: 3
+inst:   %cmp = icmp slt i32 %1, 200, !dbg !29
+resBv in transferFunction: 4
+newBv in transferFunction
+1100
+
+----------------------
+Pre Nodes for instruction:  %cmp = icmp slt i32 %1, 200, !dbg !29
+  %1 = load i32, i32* %r, align 4, !dbg !26
+
+----------------------
+List size: 3
+inst:   store i32 %inc, i32* %r, align 4, !dbg !49
+-----------------------------
+Store instruction
+  store i32 %inc, i32* %r, align 4, !dbg !49
+Gen:inc
+Kill:r
+-----------------------------
+resBv in transferFunction: 4
+newBv in transferFunction
+0110
+
+----------------------
+Pre Nodes for instruction:  store i32 %inc, i32* %r, align 4, !dbg !49
+  %inc = add nsw i32 %6, 1, !dbg !49
+
+----------------------
+List size: 3
+inst:   store i32 %div, i32* %y, align 4, !dbg !24
+-----------------------------
+Store instruction
+  store i32 %div, i32* %y, align 4, !dbg !24
+Gen:div
+Kill:y
+-----------------------------
+resBv in transferFunction: 4
+newBv in transferFunction
+1100
+List size: 2
+inst:   %1 = load i32, i32* %r, align 4, !dbg !26
+-----------------------------
+Load instruction
+  %1 = load i32, i32* %r, align 4, !dbg !26
+Kill:
+Gen:r
+-----------------------------
+resBv in transferFunction: 4
+newBv in transferFunction
+1100
+
+----------------------
+Pre Nodes for instruction:  %1 = load i32, i32* %r, align 4, !dbg !26
+  br label %for.cond, !dbg !50, !llvm.loop !51
+  br label %for.cond, !dbg !25
+
+----------------------
+List size: 3
+inst:   %inc = add nsw i32 %6, 1, !dbg !49
+resBv in transferFunction: 4
+newBv in transferFunction
+0110
+
+----------------------
+Pre Nodes for instruction:  %inc = add nsw i32 %6, 1, !dbg !49
+  %6 = load i32, i32* %r, align 4, !dbg !49
+
+----------------------
+List size: 3
+inst:   br label %for.cond, !dbg !50, !llvm.loop !51
+resBv in transferFunction: 4
+newBv in transferFunction
+1100
+
+----------------------
+Pre Nodes for instruction:  br label %for.cond, !dbg !50, !llvm.loop !51
+  store i32 %inc, i32* %r, align 4, !dbg !49
+
+----------------------
+List size: 3
+inst:   br label %for.cond, !dbg !25
+resBv in transferFunction: 4
+newBv in transferFunction
+1100
+
+----------------------
+Pre Nodes for instruction:  br label %for.cond, !dbg !25
+  store i32 %div, i32* %y, align 4, !dbg !24
+
+----------------------
+List size: 3
+inst:   %6 = load i32, i32* %r, align 4, !dbg !49
+-----------------------------
+Load instruction
+  %6 = load i32, i32* %r, align 4, !dbg !49
+Kill:
+Gen:r
+-----------------------------
+resBv in transferFunction: 4
+newBv in transferFunction
+1110
+
+----------------------
+Pre Nodes for instruction:  %6 = load i32, i32* %r, align 4, !dbg !49
+  br label %for.inc, !dbg !48
+
+----------------------
+List size: 3
+inst:   store i32 %inc, i32* %r, align 4, !dbg !49
+-----------------------------
+Store instruction
+  store i32 %inc, i32* %r, align 4, !dbg !49
+Gen:inc
+Kill:r
+-----------------------------
+resBv in transferFunction: 4
+newBv in transferFunction
+0100
+
+----------------------
+Pre Nodes for instruction:  store i32 %inc, i32* %r, align 4, !dbg !49
+  %inc = add nsw i32 %6, 1, !dbg !49
+
+----------------------
+List size: 3
+inst:   store i32 %div, i32* %y, align 4, !dbg !24
+-----------------------------
+Store instruction
+  store i32 %div, i32* %y, align 4, !dbg !24
+Gen:div
+Kill:y
+-----------------------------
+resBv in transferFunction: 4
+newBv in transferFunction
+1100
+List size: 2
+inst:   br label %for.inc, !dbg !48
+resBv in transferFunction: 4
+newBv in transferFunction
+1110
+
+----------------------
+Pre Nodes for instruction:  br label %for.inc, !dbg !48
+  br label %if.end
+  br label %if.end, !dbg !43
+
+----------------------
+List size: 3
+inst:   %inc = add nsw i32 %6, 1, !dbg !49
+resBv in transferFunction: 4
+newBv in transferFunction
+0100
+
+----------------------
+Pre Nodes for instruction:  %inc = add nsw i32 %6, 1, !dbg !49
+  %6 = load i32, i32* %r, align 4, !dbg !49
+
+----------------------
+List size: 3
+inst:   br label %if.end
+resBv in transferFunction: 4
+newBv in transferFunction
+1110
+
+----------------------
+Pre Nodes for instruction:  br label %if.end
+  store i32 %sub3, i32* %z, align 4, !dbg !47
+
