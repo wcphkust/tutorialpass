@@ -34,36 +34,41 @@ namespace {
     typedef map<string, unsigned> BitVectorBase;
     typedef deque<Instruction*> (*InstDepsFunc)(Instruction*); //deps for instruction, error prone
 
-    struct InstWorkList {
-        enum AnalyzeDirection {
-            FORWARD,
-            BACKWORD
-        };
+    enum AnalyzeDirection {
+        FORWARD,
+        BACKWORD
+    };
 
+    enum ApproximationMode {
+        MAY,
+        MUST
+    };
+
+    struct InstWorkList {
         deque<Instruction*> workList;   //TO BE polished
-        BitVectorBase varIndex;
         map<Instruction*, BitVector> instPreFactMap;    //pre-state of an instruction
         map<Instruction*, BitVector> instPostFactMap;   //post-state of an instruction
         AnalyzeDirection direction;
+        ApproximationMode approxMode;
 
         InstWorkList() = default;
-        InstWorkList(Function &F, BitVectorBase pVarIndex, bool isForward);
+        InstWorkList(Function &F, BitVectorBase pVarIndex, bool isForward = true, bool isMay = true);
 
-        BitVector transferFunction(BitVector &bv, BitVectorBase &KillBase, BitVectorBase &GenBase);  //Kill-Gen transfer function
-        BitVector join(BitVector& bv1, BitVector& bv2);
-        bool isFixedPoint(BitVector bv, Instruction* inst);    //judge fixed-point by pre-state of an instruction
-
-        //Add and delete
+        //Operations on worklist
         bool pushInstToWorkList(Instruction* inst);
         void pushDepsInstToWorkList(Instruction* inst, InstDepsFunc deps);
         void popInstToWorkList();
+        bool isEmpty();
         Instruction* getWorkListHead();
 
+        //Operations on pre/post fact map
         void insertPreBitVector(Instruction* inst, BitVector bv);
         void insertPostBitVector(Instruction* inst, BitVector bv);
 
-        //Judge whether the worklist is empty or not
-        bool isEmpty();
+        //Operations on bit vectors
+        BitVector transferFunction(BitVector &bv, BitVector &Kill, BitVector &Gen);  //Kill-Gen transfer function
+        BitVector join(BitVector& bv1, BitVector& bv2);
+        bool isFixedPoint(BitVector bv, Instruction* inst);    //judge fixed-point by pre-state of an instruction
     };
 
     struct LiveVariableInLoop : public llvm::FunctionPass {
@@ -75,24 +80,21 @@ namespace {
         LiveVariableInLoop() : llvm::FunctionPass(ID) {}
 
         bool runOnFunction(Function &F) override;
-
-        //Deps function for instruction in LVA
-        static deque<Instruction*> predDepsFunc(Instruction* inst);
-
-        //Update the liveness by Kill and Gen set
-        BitVector transferFunction(Instruction* inst, BitVector& bv);
-
-        //construct liveness info at each line
-        void getLineLivenessInfo();
-
-        //Print the result
-        void printLiveVariableInLoopResult(StringRef FuncName);
-
         void getAnalysisUsage(AnalysisUsage &AU) const;
 
-        //debug helper function
+        //Core instantiations
+        static deque<Instruction*> predDepsFunc(Instruction* inst);  //Deps function for instruction in LVA
+        BitVector constructBitVector(BitVectorBase &base);  //construct bitvector from the set of variables
+        BitVector transferFunction(Instruction* inst, BitVector& bv);  //Update the liveness by Kill and Gen set
+
+        //Print the result
+        void getLineLivenessInfo();  //construct liveness info at each line
+        void printLiveVariableInLoopResult(StringRef FuncName);  //Print the result
+
+        //Debug helper function
         void printBV(BitVector& bv);
+        void dumpInstPreFactMap();
     };
 }
 
-#endif //HELLO_TRANSFORMATION_LIVEVARIABLEINLOOP_H
+#endif
