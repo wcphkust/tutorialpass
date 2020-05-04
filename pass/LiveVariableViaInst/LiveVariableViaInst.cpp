@@ -41,6 +41,7 @@ bool LiveVariableViaInst::runOnFunction(llvm::Function &F) {
     }
 
     //collect the instruction at the exit node and initialize the worklist
+//    LVAWorkList = WorkList<Instruction>(F, varIndex,  false, true);
     LVAWorkList = InstWorkList(F, varIndex,  false, true);
 
     //Worklist algorithm
@@ -62,9 +63,11 @@ bool LiveVariableViaInst::runOnFunction(llvm::Function &F) {
 
         if (not isFixedPointReached) {
             LVAWorkList.insertPreBitVector(inst, preBv);
+//            LVAWorkList.pushDepsToWorkList(inst, predDepsFunc);
             LVAWorkList.pushDepsInstToWorkList(inst, predDepsFunc);
         }
-        LVAWorkList.popInstToWorkList();
+//        LVAWorkList.popFromWorkList();
+        LVAWorkList.popInstFromWorkList();
     }
 
     errs() << "---------------------------------" << "\n";

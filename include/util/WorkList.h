@@ -40,6 +40,36 @@ namespace PassUtilSpace {
         MUST
     };
 
+    template<class T> class WorkList {
+    public:
+        deque<T*> workList;
+        map<T*, BitVector> instPreFactMap;    //pre-state of an instruction
+        map<T*, BitVector> instPostFactMap;   //post-state of an instruction
+        AnalyzeDirection direction;
+        ApproximationMode approxMode;
+
+    public:
+        WorkList() = default;
+        WorkList(Function &F, BitVectorBase pVarIndex, bool isForward = true, bool isMay = true);
+
+        //Operations on worklist
+        bool pushInstToWorkList(T* inst);
+        void pushDepsToWorkList(T* node, InstDepsFunc deps);
+        void popFromWorkList();
+        bool isEmpty();
+        T* getWorkListHead();
+
+        //Operations on pre/post fact map
+        void insertPreBitVector(T* node, BitVector bv);
+        void insertPostBitVector(T* node, BitVector bv);
+
+        //Operations on bit vectors
+        static BitVector transferFunction(BitVector &bv, BitVector &Kill, BitVector &Gen);  //Kill-Gen transfer function
+        BitVector join(BitVector& bv1, BitVector& bv2);
+        bool isFixedPoint(BitVector bv, T* node);    //judge fixed-point by pre-state of a node
+    };
+
+
     struct InstWorkList {
         deque<Instruction*> workList;
         map<Instruction*, BitVector> instPreFactMap;    //pre-state of an instruction
@@ -53,7 +83,7 @@ namespace PassUtilSpace {
         //Operations on worklist
         bool pushInstToWorkList(Instruction* inst);
         void pushDepsInstToWorkList(Instruction* inst, InstDepsFunc deps);
-        void popInstToWorkList();
+        void popInstFromWorkList();
         bool isEmpty();
         Instruction* getWorkListHead();
 
@@ -66,6 +96,8 @@ namespace PassUtilSpace {
         BitVector join(BitVector& bv1, BitVector& bv2);
         bool isFixedPoint(BitVector bv, Instruction* inst);    //judge fixed-point by pre-state of an instruction
     };
+
+
 }
 
 #endif //HELLO_TRANSFORMATION_WORKLIST_H

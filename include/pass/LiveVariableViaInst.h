@@ -37,6 +37,7 @@ namespace {
         static char ID;
         BitVectorBase varIndex;
         map<int, BitVector> lineInfo;
+//        WorkList<Instruction> LVAWorkList;
         InstWorkList LVAWorkList;
 
         LiveVariableViaInst() : llvm::FunctionPass(ID) {}
