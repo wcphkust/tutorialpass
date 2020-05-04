@@ -11,8 +11,8 @@
 #include "llvm/Passes/PassPlugin.h"
 #include "llvm/Transforms/IPO/PassManagerBuilder.h"
 #include "llvm/IR/DebugInfoMetadata.h"
-#include "LiveVariableInBB.h"
-#include "VariableInBB.h"
+#include "pass/LiveVariableInBB.h"
+#include "pass/VariableInBB.h"
 
 using namespace std;
 using namespace llvm;

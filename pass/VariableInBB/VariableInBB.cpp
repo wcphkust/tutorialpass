@@ -7,7 +7,7 @@
 #include "llvm/Passes/PassPlugin.h"
 #include "llvm/Transforms/IPO/PassManagerBuilder.h"
 #include "llvm/IR/Instruction.h"
-#include "VariableInBB.h"
+#include "pass/VariableInBB.h"
 
 using namespace llvm;
 

@@ -11,7 +11,7 @@
 #include "llvm/Passes/PassBuilder.h"
 #include "llvm/Passes/PassPlugin.h"
 #include "llvm/Transforms/IPO/PassManagerBuilder.h"
-#include "BBinLoopCounter.h"
+#include "pass/BBinLoopCounter.h"
 
 using namespace llvm;
 

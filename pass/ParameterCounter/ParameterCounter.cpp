@@ -10,7 +10,7 @@
 #include "llvm/ADT/StringRef.h"
 #include "llvm/IR/Type.h"
 #include "llvm/IR/Argument.h"
-#include "ParameterCounter.h"
+#include "pass/ParameterCounter.h"
 
 using namespace llvm;
 using namespace std;

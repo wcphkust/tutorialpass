@@ -1,0 +1,8 @@
+add_subdirectory(OpcodeCounter)
+add_subdirectory(BBCounter)
+add_subdirectory(BBinLoopCounter)
+add_subdirectory(VariableInBB)
+add_subdirectory(LiveVariableInBB)
+add_subdirectory(LiveVariableViaBB)
+add_subdirectory(LiveVariableViaInst)
+add_subdirectory(ParameterCounter)

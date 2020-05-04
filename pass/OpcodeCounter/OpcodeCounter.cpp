@@ -5,7 +5,7 @@
 #include "llvm/IR/LegacyPassManager.h"
 #include "llvm/Passes/PassBuilder.h"
 #include "llvm/Passes/PassPlugin.h"
-#include "OpcodeCounter.h"
+#include "pass/OpcodeCounter.h"
 
 using namespace llvm;
 
