@@ -257,7 +257,7 @@ void LiveVariableViaInst::printBV(BitVector& bv) {
 /*
  * This method tells LLVM which other passes we need to execute properly
  */
-void LiveVariableViaInst::getAnalysisUsage(llvm::AnalysisUsage &AU) const {
+void LiveVariableViaInst::getAnalysisUsage(llvm::AnalysisUsage &AU) {
     AU.addRequired<VariableInBB>();
     AU.setPreservesAll();
 }
@@ -268,7 +268,7 @@ static RegisterPass<LiveVariableViaInst> X("live-var-via-inst", "LiveVariableVia
 );
 
 static llvm::RegisterStandardPasses
-        registerBBinLoopCounterPass(PassManagerBuilder::EP_EarlyAsPossible,
+        registerLiveVariableViaInstPass(PassManagerBuilder::EP_EarlyAsPossible,
                                     [](const PassManagerBuilder &Builder,
                                        legacy::PassManagerBase &PM) {
                                         PM.add(new VariableInBB());

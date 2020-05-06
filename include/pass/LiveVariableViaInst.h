@@ -42,8 +42,8 @@ namespace {
 
         LiveVariableViaInst() : llvm::FunctionPass(ID) {}
 
-        bool runOnFunction(Function &F) override;
-        void getAnalysisUsage(AnalysisUsage &AU) const;
+        bool runOnFunction(Function &F);
+        void getAnalysisUsage(AnalysisUsage &AU);
 
         //Core instantiations
         static deque<Instruction*> predDepsFunc(Instruction* inst);  //Deps function for instruction in LVA
