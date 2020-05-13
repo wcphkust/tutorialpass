@@ -23,8 +23,15 @@ using namespace std;
 
 namespace {
     struct FileObj {
-        string fileName;
-        DebugLoc source;
+        Instruction* source;
+
+        FileObj(AllocaInst* pSource) {
+            source = pSource;
+        }
+
+        bool operator < (const FileObj & b) const {
+            return (source < b.source);
+        }
     };
 
     enum FileState{
@@ -33,6 +40,7 @@ namespace {
         CLOSE,
         ERROR
     };
+
 
     struct PathFileState{
         vector<BasicBlock*> path;
@@ -43,6 +51,8 @@ namespace {
     // no loop in the function
     struct FileStateSimulator : public llvm::FunctionPass {
         static char ID;
+        set<FileObj> fileObjSet;
+        map<string, set<string>> pointToSet;
         map<FileObj, set<PathFileState>> collector;
         map<FileObj*, set<string>> aliaset;
 

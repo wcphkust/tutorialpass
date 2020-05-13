@@ -207,7 +207,6 @@ public:
 protected:
     virtual void setBoundaryCondition(FVT *) = 0;
 
-   
     virtual void meetOp(FVT *lhs,const  FVT *rhs) = 0;
 
     virtual FVT *initFlowValue(BasicBlock &b, SetType setType) = 0;

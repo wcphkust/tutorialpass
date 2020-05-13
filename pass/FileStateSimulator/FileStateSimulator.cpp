@@ -48,6 +48,47 @@ bool FileStateSimulator::runOnFunction(llvm::Function &F) {
  *   the alloc/load/store instruction on object
  */
 void FileStateSimulator::transferFunction(BasicBlock *bb) {
+    map<FileObj, set<PathFileState>> subcollector;
+    map<FileObj, set<string>> aliaset;
+
+    for (auto &&inst : *bb) {
+         Instruction* inst_ptr = &inst;
+
+        if (llvm::isa<llvm::AllocaInst>(*inst_ptr)) {
+            //Init the state
+            //TODO: Filter the file object
+            AllocaInst* allocInst_ptr = (AllocaInst*)inst_ptr;
+
+            //add the created object to the fileObjSet
+            FileObj fileObj(allocInst_ptr);
+
+            if (fileObjSet.count(allocInst_ptr) == 0) {
+                fileObjSet.insert(fileObj);
+            }
+
+            string fVarName = allocInst_ptr->getName().str();
+
+            FileState state = INIT;
+        }
+
+        //----------------------------------------------------------
+        // File Typestate Automata
+        //---------------------------------------------------------—
+        /*
+         * automaton state: INIT, OPEN, CLOSE, ERROR
+         * alphabet: [fopen], [fclose], [fgets] and other IO operations
+         * transition:
+         *   INIT: ->[fopen]->OPEN, ->[fclose]->ERROR, ->[fgets]->ERROR
+         *   OPEN: ->[fopen]->OPEN, ->[fclose]->CLOSE, ->[fgets]->OPEN
+         *   CLOSE: ->[fopen]->OPEN, ->[fclose]->ERROR, ->[fgets]->ERROR
+         *   ERROR: ->[fopen]->ERROR, ->[fclose]->ERROR, ->[fgets]->ERROR
+         */
+
+//        if (llvm::isa<llvm::CallInst>(*inst_ptr)) {
+//            inst_ptr->print(errs());
+//            errs() << "\n";
+//        }
+    }
 
 }
 
@@ -66,10 +107,10 @@ static RegisterPass<FileStateSimulator> X("file-state-simulator", "FileStateSimu
                                            false // This pass is not a pure analysis pass => false
 );
 
-static llvm::RegisterStandardPasses
-        registerFileStateSimulatorPass(PassManagerBuilder::EP_EarlyAsPossible,
-                                    [](const PassManagerBuilder &Builder,
-                                       legacy::PassManagerBase &PM) {
-                                        PM.add(new FileStateSimulator());
-                                    });
+//static llvm::RegisterStandardPasses
+//        registerFileStateSimulatorPass(PassManagerBuilder::EP_EarlyAsPossible,
+//                                    [](const PassManagerBuilder &Builder,
+//                                       legacy::PassManagerBase &PM) {
+//                                        PM.add(new FileStateSimulator());
+//                                    });
 
