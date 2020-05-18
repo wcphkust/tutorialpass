@@ -1,0 +1,30 @@
+--------------------------------------------
+Function name: main
+--------------------------------------------
+entry:
+flag top
+retval 0
+x +
+y 0
+z +
+
+if.then:
+flag +
+retval 0
+x +
+y top
+z +
+
+if.else:
+flag top
+retval 0
+x top
+y +
+z +
+
+if.end:
+flag top
+retval 0
+x top
+y top
+z +

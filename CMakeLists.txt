@@ -11,7 +11,6 @@ link_directories(${LLVM_LIBRARY_DIRS}) # libs
 
 add_subdirectory(util)
 add_subdirectory(pass)
-add_subdirectory(hw7)
 
 
 if(APPLE)
