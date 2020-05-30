@@ -8,7 +8,6 @@
 #include "llvm/IR/BasicBlock.h"
 #include "llvm/Passes/PassPlugin.h"
 #include "llvm/Transforms/IPO/PassManagerBuilder.h"
-#include "pass/LiveVariableViaInst.h"
 #include "pass/FileStateSimulator.h"
 
 using namespace std;
@@ -37,10 +36,13 @@ bool FileStateSimulator::runOnFunction(llvm::Function &F) {
     initializeAllPathState();
 
     for (auto & p : allPathArray) {
-        computeFileStateOnePath(p);
+        Path* path = &p;
+        computeFileStateOnePath(path);
     }
 
-    printFileStateSimulatorResult(F.getName());
+    printFileStateSimulatorResult();
+
+    extractDefUseMap(&F);
 }
 
 
@@ -80,34 +82,77 @@ void FileStateSimulator::initializeAllPathState() {
 }
 
 
-void FileStateSimulator::computeFileStateOnePath(Path& p) {
-    for (auto bb : p) {
-        computeFileStateOneBasicBlock(bb, pathFileStates[&p]);
+void FileStateSimulator::computeFileStateOnePath(Path* path) {
+    for (auto bb : *path) {
+        computeFileStateOneBasicBlock(bb, path);
     }
 }
 
 
-void FileStateSimulator::handleFunctionCall(CallInst *inst, FileStates &state) {
+void FileStateSimulator::handleFunctionCall(CallInst *inst, Path* path) {
+    Function* callee = inst->getCalledFunction();
 
-}
-
-
-void FileStateSimulator::computeFileStateOneBasicBlock(BasicBlock *bb, FileStates& state) {
-    for (auto inst = bb->getInstList().begin(); inst != bb->getInstList().end(); inst++) {
-        if (auto* functionCallInst = dyn_cast<CallInst>(inst)) {
-            handleFunctionCall(functionCallInst, state);
+    if (callee->getName().str() == "fopen") {
+        for (Use &U : inst->uses()){
+            User *useInst = U.getUser();
+            if (auto *storeInst = dyn_cast<StoreInst>(useInst)) {
+                Value* file = storeInst->getOperand(1);
+                string fileStr;
+                raw_string_ostream(fileStr) << file;
+                pathFileStates[path][fileStr] = "OPEN";
+            }
+        }
+    } else if (callee->getName().str() == "fclose") {
+        Value* file = inst->getOperand(0);
+        string fileStr;
+        raw_string_ostream(fileStr) << file;
+        if (pathFileStates[path].find(fileStr) == pathFileStates[path].end()) {
+            pathFileStates[path][fileStr] = "ERROR";
+        } else {
+            pathFileStates[path][fileStr] = "CLOSE";
         }
     }
 }
 
 
-/*
- *
- */
-void FileStateSimulator::printFileStateSimulatorResult(llvm::StringRef FuncName) {
+void FileStateSimulator::computeFileStateOneBasicBlock(BasicBlock *bb, Path* path) {
+    for (auto inst = bb->getInstList().begin(); inst != bb->getInstList().end(); inst++) {
+        if (auto* functionCallInst = dyn_cast<CallInst>(inst)) {
+            handleFunctionCall(functionCallInst, path);
+        }
+    }
+}
+
+void FileStateSimulator::printFileStateSimulatorResult() {
+    for (Path& p : allPathArray) {
+        for (BasicBlock* bb : p) {
+            errs() << bb->getName() << "  ";
+        }
+        errs() << "\n";
+
+        errs() << "The status of files" << "\n";
+        for (const auto & state : pathFileStates[&p]) {
+            errs() << state.first << " " << state.second << "\n";
+        }
+        errs() << "\n";
+    }
+
     errs() << "test pass" << "\n";
 }
 
+
+void FileStateSimulator::extractDefUseMap(Function* F) {
+    for (auto &bb : *F) {
+        for (auto &inst : bb) {
+            for (Use &U : inst.operands()) {
+                Value *v = U.get();
+                if (dyn_cast<Instruction>(v)) {
+                    errs() << "\"" << *dyn_cast<Instruction>(v) << "\"" << " -> " << "\"" << inst << "\"" << "\n";
+                }
+            }
+        }
+    }
+}
 
 //----------------------------------------------------------
 // Register the pass
@@ -117,10 +162,10 @@ static RegisterPass<FileStateSimulator> X("file-state-simulator", "FileStateSimu
                                            false // This pass is not a pure analysis pass => false
 );
 
-static llvm::RegisterStandardPasses
-        registerFileStateSimulatorPass(PassManagerBuilder::EP_EarlyAsPossible,
-                                    [](const PassManagerBuilder &Builder,
-                                       legacy::PassManagerBase &PM) {
-                                        PM.add(new FileStateSimulator());
-                                    });
+//static llvm::RegisterStandardPasses
+//        registerFileStateSimulatorPass(PassManagerBuilder::EP_EarlyAsPossible,
+//                                    [](const PassManagerBuilder &Builder,
+//                                       legacy::PassManagerBase &PM) {
+//                                        PM.add(new FileStateSimulator());
+//                                    });
 

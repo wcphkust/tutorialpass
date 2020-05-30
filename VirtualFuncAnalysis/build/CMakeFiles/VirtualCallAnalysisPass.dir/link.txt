@@ -1,0 +1,1 @@
+/opt/rh/devtoolset-8/root/usr/bin/c++ -fPIC    -shared  -o libVirtualCallAnalysisPass.so CMakeFiles/VirtualCallAnalysisPass.dir/VirtualCallAnalysis.cpp.o   -L/home/chengpeng/enviroment/llvmclang/llvm-10.0.0.src/build/./lib 

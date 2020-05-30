@@ -1,0 +1,225 @@
+#include <iostream>
+#include <set>
+#include <vector>
+#include <map>
+#include <cxxabi.h>
+#include "llvm/PassAnalysisSupport.h"
+#include "llvm/IR/PassManager.h"
+#include "llvm/IR/BasicBlock.h"
+#include "llvm/Pass.h"
+#include "llvm/Passes/PassBuilder.h"
+#include "llvm/Passes/PassPlugin.h"
+#include "llvm/Transforms/IPO/PassManagerBuilder.h"
+#include "llvm/IR/DebugInfoMetadata.h"
+#include "VirtualCallAnalysis.h"
+
+using namespace std;
+using namespace llvm;
+
+char VirtualCallAnalysis::ID = 0;
+
+//
+//=============================================================================
+//  Helper Functions
+//=============================================================================
+//
+
+// demangle c++ name: _ZN1BC1Ev -> B::B()
+static std::string cxx_demangle(const std::string &mangled_name) {
+
+    int status = 0;
+    char *demangled = abi::__cxa_demangle(mangled_name.c_str(), NULL, NULL, &status);
+    std::string result((status == 0 && demangled != NULL) ? demangled
+                                                        : mangled_name);
+    free(demangled);
+    return result;
+}
+
+// get class name from function name: B::B() -> B
+static std::string demangle_class_name(const std::string &demangled_name) {
+
+    int found = demangled_name.find("::");
+    return demangled_name.substr(0, found);
+}
+
+// get class name used by LLVM: A -> class.A
+static std::string llvm_class_name(const std::string &classN) {
+
+    return "class." + classN;
+}
+
+// get only function name : A::foo(int) -> foo(int)
+static std::string get_called_function_name(const std::string s) {
+
+    int found = s.find("::");
+    return s.substr(found + 2);
+}
+
+int VirtualCallAnalysis::getVtableIndex(CallInst *callinst) {
+  /*
+    Assume the virtual call looks exactly like this:
+
+     %vfn = getelementptr inbounds void (%class.B*, i32)*, void (%class.B*, i32)** %vtable, i64 0
+     %4 = load void (%class.B*, i32)*, void (%class.B*, i32)** %vfn
+     call void %4(%class.B* %2, i32 2)
+
+   */
+    if (LoadInst *li = dyn_cast<LoadInst>(callinst->getCalledValue()->stripPointerCasts())) {
+        if (GetElementPtrInst *GEP = dyn_cast<GetElementPtrInst>(li->getPointerOperand())) {
+            if (ConstantInt *ci = dyn_cast<ConstantInt>(GEP->getOperand(1))) {
+                return ci->getZExtValue();
+            }
+        }
+    }
+    return -1;
+}
+
+//
+//=============================================================================
+//  Analysis Functions
+//=============================================================================
+//
+
+//TODO
+void VirtualCallAnalysis::buildClassHierarchyInfo(llvm::Module &M) {
+    errs() << "TEST" << "\n";
+//    auto structTypes = M.getIdentifiedStructTypes();
+//
+//    for (auto st : structTypes) {
+////        set<StructType*> subTypeSet;
+////        classHierarchyMap[st] = subTypeSet;
+//    }
+//
+//    for (auto st : structTypes) {
+//        for (auto subTy : st->subtypes()) {
+//            if (StructType *subStTy = dyn_cast<StructType>(subTy)) {
+//                classHierarchyMap[st].insert(subStTy);
+//            }
+//        }
+//    }
+}
+
+void VirtualCallAnalysis::buildVirtualTableInfo(llvm::Module &M) {
+
+    static std::string vtable_for_str = "vtable for";
+    static std::string pure_virtual_str = "__cxa_pure_virtual";
+
+    for (auto &gv : M.globals()) {
+
+        // Vtables are constant global variables
+        if (!isa<Constant>(gv)) {
+            continue;
+        }
+
+        string demangled_gv_name = cxx_demangle(gv.getName().str());
+        if (demangled_gv_name == "") {
+            // the name could not be demangled
+            continue;
+        }
+
+        // The demangled name of vtables start with "vtable for"
+        if (demangled_gv_name.find(vtable_for_str) == std::string::npos) {
+            continue;
+        }
+
+        // a vtable is a constant array where each array element is a
+        if (!gv.hasInitializer()) {
+            continue;
+        }
+
+        Constant *gv_initializer = gv.getInitializer();
+        for (unsigned i = 0, e = gv_initializer->getNumOperands(); i < e; ++i) {
+
+            if (ConstantArray *CA = dyn_cast<ConstantArray>(gv_initializer->getAggregateElement(i))) {
+
+                for (unsigned j = 0; j < CA->getNumOperands(); ++j) {
+                    if (ConstantExpr *CE = dyn_cast<ConstantExpr>(CA->getAggregateElement(j))) {
+                        if (CE->isCast()) {
+                            if (Constant *Cast = ConstantExpr::getBitCast(CE, CE->getType())) {
+
+                                if (Function *VF = dyn_cast<Function>(Cast->getOperand(0))) {
+
+                                    if (VF->getName() != pure_virtual_str) {
+
+                                        // store virtual functions of the class
+                                        //TODO
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
+
+void VirtualCallAnalysis::classHierarchyAnalysis(std::string varName, int vtableIndex) {
+
+    //TODO
+}
+
+void VirtualCallAnalysis::rapidTypeAnalysis(std::string varName, int vtableIndex) {
+
+    //TODO
+}
+
+void VirtualCallAnalysis::analyzeCallSite(llvm::Function &F) {
+
+    // analyze every virtual call site
+    //TODO
+}
+
+void VirtualCallAnalysis::collectInfo(llvm::Function &F) {
+
+    // collect declare and object allocation information
+    //TODO
+}
+
+void VirtualCallAnalysis::analyzeMain(llvm::Function &F) {
+
+    collectInfo(F);
+    analyzeCallSite(F);
+}
+
+bool VirtualCallAnalysis::runOnModule(llvm::Module &M) {
+
+    buildClassHierarchyInfo(M);
+
+//    for (auto type : classHierarchyMap) {
+//        for (auto subType : type.second) {
+//            errs() << type.first->getName().str() << ":" << subType->getName().str() << "\n";
+//        }
+//    }
+
+
+    buildVirtualTableInfo(M);
+
+    for (auto &F : M) {
+
+        if (F.getName() == "main") {
+            analyzeMain(F);
+        }
+    }
+
+    dumpAllResults();
+
+    return false;
+}
+
+void VirtualCallAnalysis::dumpAllResults() {
+
+    //TODO
+}
+
+static RegisterPass<VirtualCallAnalysis> X("virtual-call", "VirtualCallAnalysis Pass",
+                                        true, // This pass doesn't modify the CFG => true
+                                        false // This pass is not a pure analysis pass => false
+);
+
+static llvm::RegisterStandardPasses
+        registerBBinLoopCounterPass(PassManagerBuilder::EP_EarlyAsPossible,
+                                    [](const PassManagerBuilder &Builder,
+                                       legacy::PassManagerBase &PM) {
+                                        PM.add(new VirtualCallAnalysis());
+                                    });

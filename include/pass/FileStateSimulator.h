@@ -24,7 +24,7 @@ using namespace std;
 
 namespace {
     typedef vector<BasicBlock*> Path;
-    typedef map<Value*, string> FileStates;
+    typedef map<string, string> FileStates;
 
     // intraprocedural, path sensitive
     // no loop in the function
@@ -33,6 +33,7 @@ namespace {
         Function* func;
         vector<Path> allPathArray;
         map<Path*, FileStates> pathFileStates;
+        map<Value*, Use*> defUseMap;
 
         FileStateSimulator() : llvm::FunctionPass(ID) {}
 
@@ -42,12 +43,12 @@ namespace {
         void collectAllPath();
         void initializeAllPathState();
 
-        void handleAllocaInst(AllocaInst* inst, FileStates& state);
-        void handleFunctionCall(CallInst* inst, FileStates& state);
+        void handleFunctionCall(CallInst* inst, Path* path);
+        void computeFileStateOnePath(Path* path);
+        void computeFileStateOneBasicBlock(BasicBlock* bb, Path* path);
+        void printFileStateSimulatorResult();
 
-        void computeFileStateOnePath(Path& p);
-        void computeFileStateOneBasicBlock(BasicBlock* bb, FileStates& state);
-        void printFileStateSimulatorResult(llvm::StringRef FuncName);
+        void extractDefUseMap(Function* F);
     };
 }
 

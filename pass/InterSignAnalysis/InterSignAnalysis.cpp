@@ -37,7 +37,6 @@ void InterSignAnalysis::extractVars(Function *func) {
                 allVarSetMap[func].insert(loadInst->op_begin()->get()->getName().str());
             } else if (isa<StoreInst>(inst)) {
                 auto storeInst = &cast<StoreInst>(inst);
-                auto storeInst = &cast<StoreInst>(inst);
                 auto op = storeInst->op_begin();
                 allVarSetMap[func].insert(op->get()->getName().str());
                 op++;
