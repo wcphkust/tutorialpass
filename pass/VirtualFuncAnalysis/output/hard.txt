@@ -1,0 +1,8 @@
+---------CHA Result---------
+o1:{B::foo(int), }
+o2:{C::foo(int), D::foo(int), }
+o3:{A::foo(int), B::foo(int), C::foo(int), D::foo(int), }
+---------RTA Result---------
+o1:{B::foo(int), }
+o2:{C::foo(int), }
+o3:{B::foo(int), C::foo(int), }
