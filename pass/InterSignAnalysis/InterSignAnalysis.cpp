@@ -196,7 +196,6 @@ void InterSignAnalysis::handleStoreInst(StoreInst* storeInst, map<BasicBlock*, m
 }
 
 void InterSignAnalysis::handleBranchInst(BranchInst* branchInst, map<BasicBlock*, map<string, string>>& funcState) {
-    //Honor code from ZHOUAN
     if (!branchInst->isConditional()) {
         return;
     }

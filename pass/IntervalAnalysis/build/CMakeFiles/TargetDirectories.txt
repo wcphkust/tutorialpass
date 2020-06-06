@@ -1,0 +1,4 @@
+/home/chengpeng/codebase/tutorialpass/hw10_skeleton/build/CMakeFiles/edit_cache.dir
+/home/chengpeng/codebase/tutorialpass/hw10_skeleton/build/CMakeFiles/rebuild_cache.dir
+/home/chengpeng/codebase/tutorialpass/hw10_skeleton/build/CMakeFiles/IntAnalysisPASS.dir
+/home/chengpeng/codebase/tutorialpass/hw10_skeleton/build/CMakeFiles/intrinsics_gen.dir
