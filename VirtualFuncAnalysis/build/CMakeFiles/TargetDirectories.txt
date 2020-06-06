@@ -1,4 +1,0 @@
-/home/chengpeng/codebase/tutorialpass/VirtualFuncAnalysis/build/CMakeFiles/edit_cache.dir
-/home/chengpeng/codebase/tutorialpass/VirtualFuncAnalysis/build/CMakeFiles/VirtualCallAnalysisPass.dir
-/home/chengpeng/codebase/tutorialpass/VirtualFuncAnalysis/build/CMakeFiles/rebuild_cache.dir
-/home/chengpeng/codebase/tutorialpass/VirtualFuncAnalysis/build/CMakeFiles/intrinsics_gen.dir
