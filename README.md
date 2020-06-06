@@ -1,4 +1,4 @@
-# TutorialPass: A start form LLVM Pass
+# Get Started for LLVM Pass
 
 ## Basic Info
 

@@ -1,3 +1,0 @@
-/home/chengpeng/codebase/tutorialpass/csachecker/TypeAnalysis/build/CMakeFiles/rebuild_cache.dir
-/home/chengpeng/codebase/tutorialpass/csachecker/TypeAnalysis/build/CMakeFiles/edit_cache.dir
-/home/chengpeng/codebase/tutorialpass/csachecker/TypeAnalysis/build/CMakeFiles/ClangTypeAnalysis.dir
