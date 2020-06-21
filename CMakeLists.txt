@@ -11,11 +11,12 @@ link_directories(${LLVM_LIBRARY_DIRS}) # libs
 
 add_subdirectory(util)
 add_subdirectory(pass)
+add_subdirectory(statistic)
 
 
-if(APPLE)
-    add_subdirectory(csachecker/TypeAnalysis)
-endif(APPLE)
+#if(APPLE)
+#    add_subdirectory(csachecker/TypeAnalysis)
+#endif(APPLE)
 
 
 

@@ -1,5 +1,4 @@
 cmake_minimum_required(VERSION 3.7)
-project(hello-transformation)
 
 find_package(LLVM REQUIRED CONFIG)
 add_definitions(${LLVM_DEFINITIONS})
