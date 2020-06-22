@@ -2,7 +2,6 @@
 // Created by chasen on 21/6/20.
 //
 
-#include <cxxabi.h>
 #include "llvm/PassAnalysisSupport.h"
 #include "llvm/IR/PassManager.h"
 #include "llvm/Passes/PassBuilder.h"
@@ -10,6 +9,7 @@
 #include "llvm/IR/DebugInfoMetadata.h"
 #include "llvm/IR/GlobalValue.h"
 #include "statistic/CondCollector.h"
+#include "util/demangle.h"
 
 char CondCollector::ID = 0;
 
@@ -48,10 +48,16 @@ bool CondCollector::checkConditionForm(Value *value) {
         return false;
     }
 
+    //consider function call
+    if (auto* funcInst = dyn_cast<CallInst>(value)) {
+        //todo
+    }
+
     if (auto* icmpInst = dyn_cast<ICmpInst>(value)) {
         Value* op1 = icmpInst->getOperand(0);
         Value* op2 = icmpInst->getOperand(1);
-        if (checkCondOperandForm(op1) || checkCondOperandForm(op2)) {
+
+        if (checkCondOperandForm(op2) || checkCondOperandForm(op1)) {
             return true;
         }
     }
@@ -62,10 +68,15 @@ bool CondCollector::checkConditionForm(Value *value) {
 
 bool CondCollector::checkCondOperandForm(Value *value) {
     if (auto* callInst = dyn_cast<CallInst>(value)) {
-        //terminal: c++filt _ZNKSt6vectorIiSaIiEE4sizeEv
-        //demangle: refer to VirtualCallAnalysis.cpp
+        string normalizedStr = cxx_demangle(callInst->getFunction()->getName().str());
+        errs() << "OK" << "\n";
+        errs() << normalizedStr << "\n";
+
+        if (normalizedStr.find("std::vector<int, std::allocator<int> >")) {
+            return true;
+        }
     }
-    return true;
+    return false;
 }
 
 
@@ -81,20 +92,14 @@ void CondCollector::printCondCollector(Module &M) {
     errs() << format("%-20s %-10s\n", str1, str2);
     errs() << "-------------------------------------------------"
                  << "\n";
-    errs() << format("%-20s %-10lu\n", M.getName().str().c_str(), containerBranchCondList.size());
-    errs() << "-------------------------------------------------"
-                 << "\n\n";
 
     for (auto it : containerBranchCondList) {
-        errs() << "Function Name" << "\n";
-        errs() << it.first->getName().str();
-        errs() << "\n\n";
-
-        errs() << "Condition" << "\n";
-        for (auto cond : it.second) {
-            errs() << cond->getName().str() << "\n";
-        }
+        string funcName = cxx_demangle(it.first->getName().str());
+        errs() << format("%-20s %-10lu\n", funcName.c_str(), containerBranchCondList[it.first].size());
     }
+
+    errs() << "-------------------------------------------------"
+           << "\n\n";
 }
 
 

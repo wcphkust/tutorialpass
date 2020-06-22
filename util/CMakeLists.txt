@@ -1,1 +1,2 @@
 add_subdirectory(WorkList)
+add_subdirectory(Demangle)
